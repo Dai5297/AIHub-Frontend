@@ -42,15 +42,16 @@ onUpdated(scrollToBottom);
 <template>
   <div class="chat-message" ref="messageContainer">
     <div class="message-container">
-      <div v-for="(message, index) in messages" :key="index" 
+      <div v-for="(message, index) in messages" :key="index"
            :class="message.sender === 'user' ? 'message user-message' : 'message ai-message'">
-        <div :class="message.sender === 'user' ? 'avatar user-avatar' : 'avatar ai-avatar'"
-             :style="message.sender === 'user' ? { backgroundColor: themeColor } : null">
-          {{ message.sender === 'user' ? '用户' : 'AI' }}
-        </div>
         <div :class="message.sender === 'user' ? 'bubble user-bubble' : 'bubble ai-bubble'"
              :style="message.sender === 'user' ? { backgroundColor: themeColor } : null">
-          <div v-html="formatMessage(message.content)"></div>
+          <div v-if="message.isTyping" class="typing-indicator">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div v-html="formatMessage(message.content)" :class="{ 'cursor': message.isTyping }"></div>
         </div>
       </div>
     </div>
@@ -72,6 +73,7 @@ onUpdated(scrollToBottom);
   flex-direction: column;
   gap: 20px;
   min-height: 100%;
+  padding-bottom: 20px;
 }
 
 .message {
@@ -113,6 +115,7 @@ onUpdated(scrollToBottom);
   border-radius: 18px;
   position: relative;
   word-break: break-word;
+  transition: opacity 0.3s ease;
 }
 
 .user-bubble {
@@ -137,5 +140,46 @@ onUpdated(scrollToBottom);
 
 .ai-bubble p:last-child {
   margin-bottom: 0;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  background-color: #666;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+}
+
+.cursor::after {
+  content: "|";
+  animation: blink 1s infinite;
+  color: #666;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 </style> 

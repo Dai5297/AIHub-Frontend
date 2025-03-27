@@ -54,9 +54,9 @@ const getUsrDetail =  async () => {
   }
 }
 
-onMounted(
-    getUserDetail()
-)
+// onMounted(
+//     getUserDetail()
+// )
 
 </script>
 

@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
-import { Position } from '@element-plus/icons-vue';
+import { ref } from 'vue'
+import { Position } from '@element-plus/icons-vue'
+import {ElMessage} from "element-plus"
 
 const props = defineProps({
   loading: {
@@ -19,21 +20,24 @@ const props = defineProps({
     type: String,
     default: '#409eff'
   }
-});
+})
 
-const emit = defineEmits(['send', 'clear']);
+const emit = defineEmits(['send', 'clear'])
 
-const inputMessage = ref('');
+const inputMessage = ref('')
 
 const sendMessage = () => {
-  if (!inputMessage.value.trim() || props.disabled) return;
+  if (!inputMessage.value.trim() || props.disabled) {
+    ElMessage.error('请输入您的问题')
+    return
+  }
   emit('send', inputMessage.value);
-  inputMessage.value = '';
-};
+  inputMessage.value = ''
+}
 
 const clearChat = () => {
   emit('clear');
-};
+}
 </script>
 
 <template>

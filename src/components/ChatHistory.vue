@@ -1,7 +1,7 @@
 <script setup>
-import { Plus, ChatDotRound } from '@element-plus/icons-vue';
+import {Plus, ChatDotRound} from '@element-plus/icons-vue';
 
-defineEmits(['new-chat']);
+defineEmits(['new-chat', 'change-chat']);
 
 defineProps({
   histories: {
@@ -11,6 +11,10 @@ defineProps({
   themeColor: {
     type: String,
     default: '#409eff'
+  },
+  currentChatId: {
+    type: String,
+    default: ''
   }
 });
 </script>
@@ -19,17 +23,32 @@ defineProps({
   <div class="sidebar">
     <div class="sidebar-header">
       <h3>聊天记录</h3>
-      <el-button 
-        :style="{ backgroundColor: themeColor, borderColor: themeColor }" 
-        @click="$emit('new-chat')"
+      <el-button
+          :style="{ backgroundColor: themeColor, borderColor: themeColor }"
+          class="new-chat"
+          @click="$emit('new-chat')"
       >
-        <el-icon><Plus /></el-icon>
+        <el-icon>
+          <Plus/>
+        </el-icon>
         新增会话
       </el-button>
     </div>
     <div class="sidebar-body">
-      <div class="history-item" v-for="(history, index) in histories" :key="index">
-        <el-icon><ChatDotRound /></el-icon>
+      <div 
+        class="history-item" 
+        v-for="(history, index) in histories" 
+        :key="index" 
+        @click="$emit('change-chat', history.id)" 
+        :class="{'active-history-item': history.id === currentChatId}"
+        :style="[
+          { backgroundColor: history.id === currentChatId ? `${themeColor}30` : `${themeColor}10` },
+          history.id === currentChatId ? { borderColor: themeColor } : {}
+        ]"
+      >
+        <el-icon :style="{ color: history.id === currentChatId ? themeColor : `${themeColor}90` }">
+          <ChatDotRound/>
+        </el-icon>
         {{ history.title }}
       </div>
     </div>
@@ -61,6 +80,10 @@ defineProps({
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+.new-chat:hover {
+  color: #fff;
+}
+
 .sidebar-body {
   height: calc(85% - 1px);
   overflow-y: auto;
@@ -72,19 +95,22 @@ defineProps({
   align-items: center;
   padding: 10px;
   margin-bottom: 5px;
-  background-color: #f0f8ff;
   border-radius: 10px;
   height: 50px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.active-history-item {
+  font-weight: bold;
 }
 
 .history-item i {
   margin-right: 10px;
-  color: #6c757d;
 }
 
 .history-item:hover {
-  background-color: #e6f7ff;
+  filter: brightness(0.95);
 }
 </style> 

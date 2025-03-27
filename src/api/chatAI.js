@@ -10,6 +10,14 @@ export function sendMessage(data) {
 }
 
 /**
+ * 为当前对话生成标题
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export function getChatTitle() {
+    return request.post('/ai/chat/title')
+}
+
+/**
  * 获取当前用户聊天记录
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
@@ -22,6 +30,6 @@ export function getChatHistory() {
  * @param data
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export function getDetailHistory(data) {
-    return request.get('/ai/chat/detail', data)
+export function getDetailHistory(id) {
+    return request.get(`/ai/chat/history/{id}`)
 }

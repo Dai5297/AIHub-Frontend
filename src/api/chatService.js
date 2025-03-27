@@ -10,6 +10,14 @@ export function sendMessage(data) {
 }
 
 /**
+ * 为当前对话生成标题
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export function getChatTitle() {
+    return request.post('/ai/service/title')
+}
+
+/**
  * 获取聊天记录
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
