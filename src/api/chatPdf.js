@@ -1,4 +1,4 @@
-import request from "@/util/request.js";
+import request from '@/util/request.js'
 
 /**
  * 发送消息
@@ -6,7 +6,14 @@ import request from "@/util/request.js";
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function sendMessage(data) {
-    return request.post('/275098505', data)
+  return fetch('/api/275098505', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Authorization') || '',
+    },
+    body: JSON.stringify(data),
+  })
 }
 
 /**
@@ -14,7 +21,7 @@ export function sendMessage(data) {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getChatTitle() {
-    return request.post('/276713838')
+  return request.post('/276713838')
 }
 
 /**
@@ -22,7 +29,7 @@ export function getChatTitle() {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getChatHistory() {
-    return request.get('/275098702')
+  return request.get('/275098702')
 }
 
 /**
@@ -31,7 +38,7 @@ export function getChatHistory() {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getDetailHistory(id) {
-    return request.get(`/275099263`)
+  return request.get(`/275099263`)
 }
 
 /**
@@ -40,5 +47,5 @@ export function getDetailHistory(id) {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function uploadPdfFile(data) {
-    return request.post('/275099263', data)
+  return request.post('/275099263', data)
 }

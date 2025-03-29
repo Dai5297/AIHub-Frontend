@@ -1,22 +1,39 @@
 <script setup>
-import {Plus, ChatDotRound} from '@element-plus/icons-vue';
+import { Plus, ChatDotRound, Delete } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 
-defineEmits(['new-chat', 'change-chat']);
+const emit = defineEmits(['new-chat', 'change-chat', 'delete-chat'])
+
+const handleDeleteChat = (id) => {
+  ElMessageBox.confirm('确定要删除此会话吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(() => {
+      emit('delete-chat', { id: id })
+    })
+    .catch(() => {})
+}
 
 defineProps({
   histories: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   themeColor: {
     type: String,
-    default: '#409eff'
+    default: '#409eff',
   },
   currentChatId: {
     type: String,
-    default: ''
-  }
-});
+    default: '',
+  },
+  currentMemoryId: {
+    type: String,
+    default: '',
+  },
+})
 </script>
 
 <template>
@@ -24,32 +41,39 @@ defineProps({
     <div class="sidebar-header">
       <h3>聊天记录</h3>
       <el-button
-          :style="{ backgroundColor: themeColor, borderColor: themeColor }"
-          class="new-chat"
-          @click="$emit('new-chat')"
+        :style="{ backgroundColor: themeColor, borderColor: themeColor }"
+        class="new-chat"
+        @click="$emit('new-chat')"
       >
         <el-icon>
-          <Plus/>
+          <Plus />
         </el-icon>
         新增会话
       </el-button>
     </div>
     <div class="sidebar-body">
-      <div 
-        class="history-item" 
-        v-for="(history, index) in histories" 
-        :key="index" 
-        @click="$emit('change-chat', history.id)" 
-        :class="{'active-history-item': history.id === currentChatId}"
+      <div
+        class="history-item"
+        v-for="(history, index) in histories"
+        :key="index"
+        @click="$emit('change-chat', { id: history.id, memoryId: history.memoryId })"
+        :class="{ 'active-history-item': history.id === currentChatId }"
         :style="[
           { backgroundColor: history.id === currentChatId ? `${themeColor}30` : `${themeColor}10` },
-          history.id === currentChatId ? { borderColor: themeColor } : {}
+          history.id === currentChatId ? { borderColor: themeColor } : {},
         ]"
       >
         <el-icon :style="{ color: history.id === currentChatId ? themeColor : `${themeColor}90` }">
-          <ChatDotRound/>
+          <ChatDotRound />
         </el-icon>
         {{ history.title }}
+        <el-icon
+          class="delete-icon"
+          @click.stop="handleDeleteChat(history.id)"
+          :style="{ color: history.id === currentChatId ? themeColor : `${themeColor}90` }"
+        >
+          <Delete />
+        </el-icon>
       </div>
     </div>
   </div>
@@ -113,4 +137,15 @@ defineProps({
 .history-item:hover {
   filter: brightness(0.95);
 }
-</style> 
+
+.delete-icon {
+  margin-left: auto;
+  padding: 5px;
+  transition: all 0.2s;
+  font-size: 23px;
+}
+
+.delete-icon:hover {
+  color: #f56c6c !important;
+}
+</style>

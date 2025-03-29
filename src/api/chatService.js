@@ -1,4 +1,4 @@
-import request from "@/util/request.js";
+import request from '@/util/request.js'
 
 /**
  * 发送消息
@@ -6,7 +6,14 @@ import request from "@/util/request.js";
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function sendMessage(data) {
-    return request.post('/ai/service', data)
+  return fetch('/api/ai/service', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Authorization') || '',
+    },
+    body: JSON.stringify(data),
+  })
 }
 
 /**
@@ -14,7 +21,7 @@ export function sendMessage(data) {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getChatTitle() {
-    return request.post('/ai/service/title')
+  return request.post('/ai/service/title')
 }
 
 /**
@@ -22,7 +29,7 @@ export function getChatTitle() {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getChatHistory() {
-    return request.get('/ai/service/history')
+  return request.get('/ai/service/history')
 }
 
 /**
@@ -30,6 +37,6 @@ export function getChatHistory() {
  * @param data
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export function getDetailHistory(data) {
-    return request.get('/ai/service/detail', data)
+export function getDetailHistory(id) {
+  return request.get(`/ai/service/detail/${id}`)
 }

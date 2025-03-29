@@ -1,25 +1,25 @@
 <script setup>
 import { ref } from 'vue'
 import { Position } from '@element-plus/icons-vue'
-import {ElMessage} from "element-plus"
+import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   disabled: {
     type: Boolean,
-    default: false
+    default: false,
   },
   placeholder: {
     type: String,
-    default: '请输入您的问题...'
+    default: '请输入您的问题...',
   },
   themeColor: {
     type: String,
-    default: '#409eff'
-  }
+    default: '#409eff',
+  },
 })
 
 const emit = defineEmits(['send', 'clear'])
@@ -31,12 +31,12 @@ const sendMessage = () => {
     ElMessage.error('请输入您的问题')
     return
   }
-  emit('send', inputMessage.value);
+  emit('send', inputMessage.value)
   inputMessage.value = ''
 }
 
 const clearChat = () => {
-  emit('clear');
+  emit('clear')
 }
 </script>
 
@@ -54,24 +54,25 @@ const clearChat = () => {
       />
       <div class="input-tools">
         <el-tooltip content="发送消息 (Ctrl+Enter)">
-          <el-button 
+          <el-button
             :style="{ backgroundColor: themeColor, borderColor: themeColor }"
             class="round-button"
             :loading="loading"
             :disabled="disabled"
             @click="sendMessage"
           >
-            <el-icon><Position /></el-icon>
+            <el-icon v-if="!loading"><Position /></el-icon>
+            <span v-else class="loading-text">处理中</span>
           </el-button>
         </el-tooltip>
       </div>
     </div>
     <div class="input-footer">
       <span class="footer-tip">按 Ctrl+Enter 发送</span>
-      <el-button 
-        link 
-        size="small" 
-        :disabled="disabled" 
+      <el-button
+        link
+        size="small"
+        :disabled="disabled"
         :style="{ color: themeColor }"
         @click="clearChat"
       >
@@ -150,4 +151,19 @@ const clearChat = () => {
   color: #909399;
   font-size: 12px;
 }
-</style> 
+
+.loading-text {
+  font-size: 12px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+</style>

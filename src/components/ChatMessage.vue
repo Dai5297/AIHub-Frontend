@@ -1,57 +1,68 @@
 <script setup>
+import { nextTick } from 'vue'
+
 // 定义props用于接收消息数据
 defineProps({
   messages: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   themeColor: {
     type: String,
-    default: '#409eff'  // 默认主题色
-  }
-});
+    default: '#409eff', // 默认主题色
+  },
+})
 
 // 格式化消息内容的方法
 const formatMessage = (content) => {
   // 如果内容已经是HTML格式，直接返回
   if (content.includes('<p>')) {
-    return content;
+    return content
   }
   // 简单处理纯文本，将其包装在p标签中
-  return `<p>${content}</p>`;
-};
+  return content
+    .replace(/<\/?p>/g, '') // 移除已有p标签
+    .replace(/(^[\n\t\r]+|[\n\t\r]+$)/g, '') // 去除首尾空白
+    .replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '<br>') // 转换换行为<br>
+}
 
 // 自动滚动到最新消息
-import { ref, onUpdated } from 'vue';
-const messageContainer = ref(null);
+import { ref, onUpdated } from 'vue'
+const messageContainer = ref(null)
 
 // 监听消息变化，自动滚动到底部
-const scrollToBottom = () => {
+const scrollToBottom = async () => {
+  await nextTick() // 等待DOM更新[3](@ref)
   if (messageContainer.value) {
-    const container = messageContainer.value;
-    setTimeout(() => {
-      container.scrollTop = container.scrollHeight;
-    }, 50);
+    messageContainer.value.scrollTop = messageContainer.value.scrollHeight
   }
-};
+}
 
-onUpdated(scrollToBottom);
+onUpdated(scrollToBottom)
 </script>
 
 <template>
   <div class="chat-message" ref="messageContainer">
     <div class="message-container">
-      <div v-for="(message, index) in messages" :key="index"
-           :class="message.sender === 'user' ? 'message user-message' : 'message ai-message'">
-        <div :class="message.sender === 'user' ? 'bubble user-bubble' : 'bubble ai-bubble'"
-             :style="message.sender === 'user' ? { backgroundColor: themeColor } : null">
+      <div
+        v-for="(message, index) in messages"
+        :key="index"
+        :class="message.sender === 'user' ? 'message user-message' : 'message ai-message'"
+      >
+        <div
+          :class="message.sender === 'user' ? 'bubble user-bubble' : 'bubble ai-bubble'"
+          :style="message.sender === 'user' ? { backgroundColor: themeColor } : null"
+        >
           <div v-if="message.isTyping" class="typing-indicator">
             <div class="dot"></div>
             <div class="dot"></div>
             <div class="dot"></div>
           </div>
-          <div v-html="formatMessage(message.content)" :class="{ 'cursor': message.isTyping }"></div>
+          <span class="message-content">
+            <span v-html="formatMessage(message.content)"></span>
+            <span v-if="message.isTyping" class="cursor">|</span>
+          </span>
         </div>
       </div>
     </div>
@@ -164,7 +175,9 @@ onUpdated(scrollToBottom);
 }
 
 @keyframes bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: translateY(0);
   }
   40% {
@@ -172,14 +185,30 @@ onUpdated(scrollToBottom);
   }
 }
 
-.cursor::after {
-  content: "|";
+.message-content {
+  display: inline-block;
+  line-height: 1.5;
+}
+
+.cursor {
+  display: inline;
   animation: blink 1s infinite;
   color: #666;
+  margin-left: 0;
+  vertical-align: baseline;
+  font-weight: normal;
+  line-height: 1;
+  margin-left: 2px;
+  vertical-align: text-bottom;
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
-</style> 
+</style>

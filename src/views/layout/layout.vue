@@ -1,10 +1,10 @@
 <script setup>
-import {onMounted, ref} from "vue";
-import {User} from '@element-plus/icons-vue';
-import {ElMessage} from "element-plus";
-import {RouterLink} from 'vue-router';
-import {getUserDetail, changePassword} from "@/api/layout.js";
-import {useRouter} from "vue-router";
+import { onMounted, ref } from 'vue'
+import { User } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { RouterLink } from 'vue-router'
+import { getUserDetail, changePassword } from '@/api/layout.js'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
@@ -15,13 +15,13 @@ const dialogFormVisible = ref(false)
 const form = ref({
   oldPassword: '',
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
 
 const formLabelWidth = '140px'
 
 const handleChangePassword = async () => {
-  if (!form.value.oldPassword || !form.value.newPassword || !form.value.confirmPassword){
+  if (!form.value.oldPassword || !form.value.newPassword || !form.value.confirmPassword) {
     ElMessage.error('请填写完整信息')
     return
   }
@@ -44,7 +44,7 @@ const handleLogout = async () => {
   await router.push('/login')
 }
 
-const getUsrDetail =  async () => {
+const getUsrDetail = async () => {
   const res = await getUserDetail()
   if (res.code === 200) {
     username.value = res.data.username
@@ -54,10 +54,7 @@ const getUsrDetail =  async () => {
   }
 }
 
-// onMounted(
-//     getUserDetail()
-// )
-
+onMounted(getUsrDetail)
 </script>
 
 <template>
@@ -66,12 +63,12 @@ const getUsrDetail =  async () => {
       <el-header class="head">
         <div class="logo">
           <RouterLink to="/main">
-            <img src="@/assets/logo.png" alt="AIHub Logo" class="logo-img">
+            <img src="@/assets/logo.png" alt="AIHub Logo" class="logo-img" />
           </RouterLink>
         </div>
         <el-dropdown class="user">
           <span class="el-dropdown-link">
-            <el-icon><User/></el-icon>
+            <el-icon><User /></el-icon>
             <span class="username">{{ username }}</span>
           </span>
           <template #dropdown>
@@ -83,43 +80,33 @@ const getUsrDetail =  async () => {
         </el-dropdown>
       </el-header>
       <el-main class="main">
-
         <!--主体界面-->
         <router-view v-slot="{ Component }">
           <transition name="fade-transform" mode="out-in">
-            <component :is="Component"/>
+            <component :is="Component" />
           </transition>
         </router-view>
 
         <!--修改密码-->
-        <el-dialog
-            v-model="dialogFormVisible"
-            title="修改密码"
-            width="500"
-            align-center
-            center
-        >
+        <el-dialog v-model="dialogFormVisible" title="修改密码" width="500" align-center center>
           <el-form :model="form">
             <el-form-item label="请输入原始密码" :label-width="formLabelWidth" required>
-              <el-input v-model="form.oldPassword" autocomplete="off" type="password"/>
+              <el-input v-model="form.oldPassword" autocomplete="off" type="password" />
             </el-form-item>
             <el-form-item label="请输入新密码" :label-width="formLabelWidth" required>
-              <el-input v-model="form.newPassword" autocomplete="off" type="password"/>
+              <el-input v-model="form.newPassword" autocomplete="off" type="password" />
             </el-form-item>
             <el-form-item label="请确认新密码" :label-width="formLabelWidth" required>
-              <el-input v-model="form.confirmPassword" autocomplete="off" type="password"/>
+              <el-input v-model="form.confirmPassword" autocomplete="off" type="password" />
             </el-form-item>
           </el-form>
           <template #footer>
             <div class="dialog-footer">
               <el-button @click="dialogFormVisible = false">取消</el-button>
-              <el-button type="primary" @click="handleChangePassword()">
-                确认
-              </el-button>
+              <el-button type="primary" @click="handleChangePassword()"> 确认 </el-button>
             </div>
           </template>
         </el-dialog>
-
       </el-main>
     </el-container>
   </div>

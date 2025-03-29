@@ -6,7 +6,14 @@ import request from '@/util/request.js'
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function sendMessage(data) {
-    return request.post('/ai/medical', data)
+  return fetch('/api/ai/medical', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('Authorization') || '',
+    },
+    body: JSON.stringify(data),
+  })
 }
 
 /**
@@ -14,7 +21,7 @@ export function sendMessage(data) {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getChatTitle() {
-    return request.post('/ai/medical/title')
+  return request.post('/ai/medical/title')
 }
 
 /**
@@ -22,7 +29,7 @@ export function getChatTitle() {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getChatHistory() {
-    return request.get('/ai/medical/history')
+  return request.get('/ai/medical/history')
 }
 
 /**
@@ -31,5 +38,5 @@ export function getChatHistory() {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function getDetailHistory(data) {
-    return request.get('/ai/medical/detail', data)
+  return request.get('/ai/medical/detail', data)
 }
