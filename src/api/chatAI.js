@@ -5,7 +5,7 @@
  */
 import request from '@/util/request.js'
 
-export async function sendMessage({ memoryId, message }) {
+export async function sendMessage({ memoryId, message, isOnlineSearch }) {
   try {
     if (memoryId) {
       localStorage.setItem('chatMemoryId', memoryId)
@@ -16,7 +16,7 @@ export async function sendMessage({ memoryId, message }) {
         'Content-Type': 'application/json',
         Authorization: localStorage.getItem('Authorization') || '',
       },
-      body: JSON.stringify({ memoryId, message }),
+      body: JSON.stringify({ memoryId, message, onlineSearch: isOnlineSearch }),
     })
 
     if (!response.ok) {

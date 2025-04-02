@@ -70,6 +70,8 @@ const addStreamingMessage = (content) => {
 }
 
 // 发送信息
+const isOnlineSearch = ref(true)
+
 const handleSendMessage = async (message) => {
   if (messages.value.length === 1) {
     isFirstMessage.value = true
@@ -92,6 +94,7 @@ const handleSendMessage = async (message) => {
   const data = {
     message: message,
     memoryId: currentChatId.value,
+    isOnlineSearch: isOnlineSearch.value
   }
 
   try {
@@ -277,6 +280,16 @@ onMounted(async () => {
     <div class="chat-body">
       <ChatMessage :messages="messages" theme-color="#409eff" />
       <div class="input-section">
+        <div class="search-options">
+          <el-switch 
+            v-model="isOnlineSearch" 
+            active-text="联网搜索" 
+            inactive-text="本地搜索"
+            :active-value="true"
+            :inactive-value="false" 
+            style="--el-switch-on-color: #409eff; --el-switch-off-color: #909399;"
+          />
+        </div>
         <ChatInput
           :loading="isLoading"
           theme-color="#409eff"
