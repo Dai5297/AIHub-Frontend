@@ -3,25 +3,44 @@ import request from '@/util/request.js'
 /**
  * 发送消息
  * @param data
- * @returns {Promise<axios.AxiosResponse<any>>}
+ * @returns {Promise<ReadableStream>}
  */
-export function sendMessage(data) {
-  return fetch('/api/ai/medical', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Authorization') || '',
-    },
-    body: JSON.stringify(data),
-  })
+export async function sendMessage({ memoryId, message, isOnlineSearch }) {
+  try {
+    if (memoryId) {
+      localStorage.setItem('chatMemoryId', memoryId)
+    }
+    const response = await fetch('/api/ai/medical', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Authorization') || '',
+      },
+      body: JSON.stringify({ memoryId, message, onlineSearch: isOnlineSearch }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+    }
+
+    if (!response.body) {
+      throw new Error('ReadableStream not supported in this browser')
+    }
+
+    return response.body
+  } catch (error) {
+    console.error('Error sending message:', error)
+    throw error
+  }
 }
 
 /**
  * 为当前对话生成标题
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export function getChatTitle() {
-  return request.post('/ai/medical/title')
+export function getChatTitle(data) {
+  return request.post('/ai/medical/title', data)
 }
 
 /**
@@ -37,6 +56,24 @@ export function getChatHistory() {
  * @param data
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export function getDetailHistory(data) {
-  return request.get('/ai/medical/detail', data)
+export function getDetailHistory({ id }) {
+  return request.get(`/ai/medical/history/${id}`)
+}
+
+/**
+ * 新建对话
+ * @param {string} id 对话ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export function sendNewChat(id) {
+  return request.post(`/ai/medical/new/${id}`)
+}
+
+/**
+ * 删除对话
+ * @param {string} id 对话ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export function deleteChat(id) {
+  return request.delete(`/ai/medical/delete/${id}`)
 }

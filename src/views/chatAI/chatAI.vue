@@ -20,10 +20,7 @@ const currentChatId = ref()
 
 // 聊天历史记录数据
 const histories = ref([
-  {
-    id: '608866',
-    title: '新对话',
-  },
+
 ])
 
 // 欢迎语

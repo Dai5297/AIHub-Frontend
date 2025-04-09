@@ -4,7 +4,14 @@ import ChatMessage from '@/components/ChatMessage.vue'
 import ChatInput from '@/components/ChatInput.vue'
 import ChatHistory from '@/components/ChatHistory.vue'
 import { ref, onMounted } from 'vue'
-import { sendMessage, getChatTitle, getDetailHistory, getChatHistory } from '@/api/chatService.js'
+import {
+  sendMessage,
+  getChatTitle,
+  getDetailHistory,
+  getChatHistory,
+  sendNewChat,
+  deleteChat,
+} from '@/api/chatService.js'
 import { marked } from 'marked'
 
 // 是否开启快速回复
@@ -69,8 +76,17 @@ const handleSendMessage = async (message) => {
     content: message,
   })
 
+  // 添加一个AI消息占位，显示加载动画
+  const aiMessage = {
+    sender: 'ai',
+    content: '',
+    isTyping: true,
+  }
+  messages.value.push(aiMessage)
+
   const data = {
     message: message,
+    memoryId: currentChatId.value,
     isQuickReply: isQuickReply.value,
   }
 
@@ -90,9 +106,19 @@ const handleSendMessage = async (message) => {
       result += chunk
     }
 
+    // 移除加载中的消息
+    messages.value.pop()
+    // 添加实际的响应消息
     addStreamingMessage(result)
     reader.releaseLock()
   } catch (error) {
+    // 移除加载中的消息
+    messages.value.pop()
+    // 添加错误消息
+    messages.value.push({
+      sender: 'ai',
+      content: `<p>抱歉，请求失败: ${error.message}</p>`,
+    })
     ElMessage.error('请求失败: ' + error.message)
   }
 
@@ -120,18 +146,17 @@ const handleClearChat = () => {
 }
 
 //  创建新对话
-const handleNewChat = () => {
+const handleNewChat = async () => {
   if (histories.value.some((item) => item.title === '新对话')) {
     ElMessage.error('您已经创建了一个新的对话')
     return
   }
   const newId = Date.now().toString().slice(-6)
   currentChatId.value = newId
-  currentMemoryId.value = ''
-  histories.value.push({
+  histories.value.unshift({
     id: newId,
     title: `新对话`,
-    memoryId: '',
+    memoryId: Date.now().toString(),
   })
   messages.value = [
     {
@@ -139,49 +164,93 @@ const handleNewChat = () => {
       content: `<p>您好！我是您的智能客服助手，很高兴为您服务。请问有什么可以帮助您的？</p>`,
     },
   ]
+  const res = await sendNewChat(newId)
+  if (!res.code === 200) {
+    ElMessage.error(res.msg)
+  }
 }
 
 //  切换对话
 const handleChangeChat = async ({ id, memoryId }) => {
   currentChatId.value = id
-  currentMemoryId.value = memoryId
-  const res = await getDetailHistory(id)
-  if (res.code === 200) {
-    messages.value = [...res.data] // 强制触发响应式更新
-  } else {
-    ElMessage.error('请求失败，请稍后重试')
+  try {
+    const res = await getDetailHistory({ id, memoryId })
+    if (res.code === 200) {
+      // 统一格式化AI消息
+      const formattedMessages = JSON.parse(JSON.stringify(res.data)).map((message) => {
+        if (message.sender === 'ai') {
+          // 强制所有AI消息走Markdown转换流程
+          message.content = marked(message.content || '')
+            .replace(/\n$/, '')
+            .replace(/<\/p>\n/g, '</p>')
+            .replace(/(<[^>]+>)\n/g, '$1') // 新增：清理标签后的换行
+        }
+        return message
+      })
+      messages.value = formattedMessages
+    }
+  } catch (error) {
+    ElMessage.error(`加载失败: ${error.message}`)
   }
 }
 
-//  获取对话信息
+// 修改后的历史记录获取
 const getHistorty = async () => {
   const res = await getChatHistory()
   if (res.code === 200) {
-    histories.value = res.data
-    currentChatId.value = res.data[0].id
-    const resDetail = await getDetailHistory(res.data[0].id)
-    if (resDetail.code === 200) {
-      messages.value = [...resDetail.data] // 强制触发响应式更新
-    } else {
-      ElMessage.error('请求失败，请稍后重试')
+    histories.value = res.data.map((item) => ({
+      id: item.id,
+      title: item.title,
+      memoryId: item.memoryId || Date.now().toString(), // 确保memoryId存在
+    }))
+    // 设置第一个为当前对话
+    if (histories.value.length > 0) {
+      currentChatId.value = histories.value[0].id
     }
-  } else {
-    ElMessage.error('请求失败，请稍后重试')
   }
 }
 
-const handleDeleteChat = async (id) => {
-  const res = await deleteChatHistory(id)
-  if (res.code === 200) {
-    await getHistorty()
-    ElMessage.success('删除成功')
-  } else {
-    ElMessage.error('删除失败，请稍后重试')
+// 删除对话
+const handleDeleteChat = async (payload) => {
+  try {
+    const { id } = payload // 正确解构参数
+    const res = await deleteChat(id)
+    if (res.code === 200) {
+      ElMessage.success('删除成功')
+      // 过滤掉被删除的对话
+      histories.value = histories.value.filter((item) => item.id !== id)
+      // 如果删除的是当前对话，则切换到第一个对话或创建新对话
+      if (currentChatId.value === id) {
+        if (histories.value.length > 0) {
+          await handleChangeChat({
+            id: histories.value[0].id,
+            memoryId: histories.value[0].memoryId,
+          })
+        } else {
+          await handleNewChat()
+        }
+      }
+    } else {
+      ElMessage.error(res.msg)
+    }
+  } catch (error) {
+    ElMessage.error(`删除失败: ${error.message}`)
   }
 }
 
 onMounted(async () => {
   await getHistorty()
+
+  // 等待历史记录加载完成后再获取详情
+  if (currentChatId.value) {
+    const target = histories.value.find((h) => h.id === currentChatId.value)
+    if (target?.memoryId) {
+      await handleChangeChat({
+        id: currentChatId.value,
+        memoryId: target.memoryId,
+      })
+    }
+  }
 })
 </script>
 
@@ -193,6 +262,7 @@ onMounted(async () => {
       theme-color="#b265f8"
       @new-chat="handleNewChat"
       @change-chat="handleChangeChat"
+      @delete-chat="handleDeleteChat"
     />
     <div class="chat-body">
       <ChatMessage :messages="messages" theme-color="#b265f8" />

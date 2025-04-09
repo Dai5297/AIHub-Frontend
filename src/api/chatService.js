@@ -3,17 +3,36 @@ import request from '@/util/request.js'
 /**
  * 发送消息
  * @param data
- * @returns {Promise<axios.AxiosResponse<any>>}
+ * @returns {Promise<ReadableStream>}
  */
-export function sendMessage(data) {
-  return fetch('/api/ai/service', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('Authorization') || '',
-    },
-    body: JSON.stringify(data),
-  })
+export async function sendMessage({ memoryId, message, isQuickReply }) {
+  try {
+    if (memoryId) {
+      localStorage.setItem('chatMemoryId', memoryId)
+    }
+    const response = await fetch('/api/ai/service', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('Authorization') || '',
+      },
+      body: JSON.stringify({ memoryId, message, quickReply: isQuickReply }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+    }
+
+    if (!response.body) {
+      throw new Error('ReadableStream not supported in this browser')
+    }
+
+    return response.body
+  } catch (error) {
+    console.error('Error sending message:', error)
+    throw error
+  }
 }
 
 /**
@@ -39,4 +58,22 @@ export function getChatHistory() {
  */
 export function getDetailHistory(id) {
   return request.get(`/ai/service/detail/${id}`)
+}
+
+/**
+ * 新建对话
+ * @param {string} id 对话ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export function sendNewChat(id) {
+  return request.post(`/ai/service/new/${id}`)
+}
+
+/**
+ * 删除对话
+ * @param {string} id 对话ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export function deleteChat(id) {
+  return request.delete(`/ai/service/delete/${id}`)
 }
