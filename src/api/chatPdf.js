@@ -6,7 +6,7 @@ import request from '@/util/request.js'
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function sendMessage(data) {
-  return fetch('/api/275098505', {
+  return fetch('/api/ai/pdf', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -47,5 +47,9 @@ export function getDetailHistory(id) {
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export function uploadPdfFile(data) {
-  return request.post('/275099263', data)
+  return request.post('/ai/pdf/upload', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data' // 显式设置请求头[1,5](@ref)
+    }
+  })
 }

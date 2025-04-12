@@ -11,11 +11,8 @@ import {
   getChatHistory,
   sendNewChat,
   deleteChat,
-} from '@/api/chatService.js'
+} from '@/api/chatTravel.js'
 import { marked } from 'marked'
-
-// 是否开启快速回复
-const isQuickReply = ref(true)
 
 const isFirstMessage = ref()
 
@@ -23,19 +20,22 @@ const currentChatId = ref()
 
 // 聊天历史记录数据
 const histories = ref([
-  {
-    id: '200001',
-    title: '新对话',
-  },
+
 ])
 
 // 欢迎语
 const messages = ref([
   {
     sender: 'ai',
-    content: `<p>您好！我是您的智能客服助手，很高兴为您服务。请问有什么可以帮助您的？</p>`,
+    content: `<p>您好！我是您的智能出行助手，我可以帮您规划行程、查询交通信息、推荐旅游景点等。请问您需要什么帮助？</p>`,
   },
 ])
+
+marked.setOptions({
+  breaks: false, // 关闭自动换行转换
+  gfm: true,
+  headerIds: false,
+})
 
 const isLoading = ref(false)
 
@@ -54,6 +54,8 @@ const addStreamingMessage = (content) => {
     if (index < content.length) {
       // 使用marked解析Markdown内容
       aiMessage.content = marked(content.substring(0, index + 1))
+          .replace(/\n$/, '')
+          .replace(/<\/p>\n/g, '</p>')
       index++
       messages.value = [...messages.value]
     } else {
@@ -64,7 +66,6 @@ const addStreamingMessage = (content) => {
   }, 30)
 }
 
-// 发送信息
 const handleSendMessage = async (message) => {
   if (messages.value.length === 1) {
     isFirstMessage.value = true
@@ -87,7 +88,6 @@ const handleSendMessage = async (message) => {
   const data = {
     message: message,
     memoryId: currentChatId.value,
-    isQuickReply: isQuickReply.value,
   }
 
   try {
@@ -126,13 +126,19 @@ const handleSendMessage = async (message) => {
 
   //  如果为第一个对话则发送请求获取对话标题
   if (isFirstMessage.value) {
-    const res = await getChatTitle()
+    const res = await getChatTitle(data)
     if (res.code === 200) {
-      histories.value.forEach((item) => {
-        if (item.title === '新对话') {
-          item.title = res.data.title
+      // 直接修改对象属性并强制更新，确保响应式更新
+      const newHistories = [...histories.value]
+      for (let i = 0; i < newHistories.length; i++) {
+        if (newHistories[i].title === '新对话') {
+          // 后端返回的数据格式是{"code":200,"msg":"操作成功","data":"晨曦曙光"}
+          newHistories[i].title = res.data
+          console.log('更新后的标题:', newHistories[i].title)
         }
-      })
+      }
+      // 强制更新整个数组以触发响应式更新
+      histories.value = newHistories
     } else {
       ElMessage.error('请求失败，请稍后重试')
     }
@@ -161,52 +167,12 @@ const handleNewChat = async () => {
   messages.value = [
     {
       sender: 'ai',
-      content: `<p>您好！我是您的智能客服助手，很高兴为您服务。请问有什么可以帮助您的？</p>`,
+      content: `<p>您好！我是您的智能出行助手，我可以帮您规划行程、查询交通信息、推荐旅游景点等。请问您需要什么帮助？</p>`,
     },
   ]
   const res = await sendNewChat(newId)
   if (!res.code === 200) {
     ElMessage.error(res.msg)
-  }
-}
-
-//  切换对话
-const handleChangeChat = async ({ id, memoryId }) => {
-  currentChatId.value = id
-  try {
-    const res = await getDetailHistory({ id, memoryId })
-    if (res.code === 200) {
-      // 统一格式化AI消息
-      const formattedMessages = JSON.parse(JSON.stringify(res.data)).map((message) => {
-        if (message.sender === 'ai') {
-          // 强制所有AI消息走Markdown转换流程
-          message.content = marked(message.content || '')
-            .replace(/\n$/, '')
-            .replace(/<\/p>\n/g, '</p>')
-            .replace(/(<[^>]+>)\n/g, '$1') // 新增：清理标签后的换行
-        }
-        return message
-      })
-      messages.value = formattedMessages
-    }
-  } catch (error) {
-    ElMessage.error(`加载失败: ${error.message}`)
-  }
-}
-
-// 修改后的历史记录获取
-const getHistorty = async () => {
-  const res = await getChatHistory()
-  if (res.code === 200) {
-    histories.value = res.data.map((item) => ({
-      id: item.id,
-      title: item.title,
-      memoryId: item.memoryId || Date.now().toString(), // 确保memoryId存在
-    }))
-    // 设置第一个为当前对话
-    if (histories.value.length > 0) {
-      currentChatId.value = histories.value[0].id
-    }
   }
 }
 
@@ -235,6 +201,46 @@ const handleDeleteChat = async (payload) => {
     }
   } catch (error) {
     ElMessage.error(`删除失败: ${error.message}`)
+  }
+}
+
+//  切换对话
+const handleChangeChat = async ({ id, memoryId }) => {
+  currentChatId.value = id
+  try {
+    const res = await getDetailHistory({ id, memoryId })
+    if (res.code === 200) {
+      // 统一格式化AI消息
+      const formattedMessages = JSON.parse(JSON.stringify(res.data)).map((message) => {
+        if (message.sender === 'ai') {
+          // 强制所有AI消息走Markdown转换流程[1](@ref)
+          message.content = marked(message.content || '')
+              .replace(/\n$/, '')
+              .replace(/<\/p>\n/g, '</p>')
+              .replace(/(<[^>]+>)\n/g, '$1') // 新增：清理标签后的换行
+        }
+        return message
+      })
+      messages.value = formattedMessages
+    }
+  } catch (error) {
+    ElMessage.error(`加载失败: ${error.message}`)
+  }
+}
+
+// 修改后的历史记录获取
+const getHistorty = async () => {
+  const res = await getChatHistory()
+  if (res.code === 200) {
+    histories.value = res.data.map((item) => ({
+      id: item.id,
+      title: item.title,
+      memoryId: item.memoryId || Date.now().toString(), // 确保memoryId存在[5](@ref)
+    }))
+    // 设置第一个为当前对话
+    if (histories.value.length > 0) {
+      currentChatId.value = histories.value[0].id
+    }
   }
 }
 
@@ -268,9 +274,8 @@ onMounted(async () => {
       <ChatMessage :messages="messages" theme-color="#b265f8" />
       <div class="input-section">
         <ChatInput
-          style="margin-top: 20px"
           :loading="isLoading"
-          theme-color="#1e90ff"
+          theme-color="#b265f8"
           @send="handleSendMessage"
           @clear="handleClearChat"
         />
@@ -287,6 +292,24 @@ onMounted(async () => {
   overflow: hidden;
 }
 
+.cursor {
+  animation: blink 1s infinite;
+  color: #b265f8;
+  display: inline;
+  margin-left: 0;
+  vertical-align: baseline;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
 .chat-body {
   margin-left: 10px;
   display: flex;
@@ -300,6 +323,7 @@ onMounted(async () => {
 }
 
 .input-section {
+  padding-top: 20px;
   border-top: 1px solid #eee;
 }
 
@@ -311,7 +335,7 @@ onMounted(async () => {
 }
 
 .search-options :deep(.el-switch) {
-  --el-switch-on-color: #1e90ff;
+  --el-switch-on-color: #b265f8;
 }
 
 .search-options :deep(.el-switch__label) {
@@ -320,6 +344,36 @@ onMounted(async () => {
 }
 
 .search-options :deep(.el-switch__label.is-active) {
-  color: #1e90ff;
+  color: #b265f8;
+}
+
+/* Styles for structured messages */
+:deep(.message-content) h3 {
+  color: #b265f8;
+  margin: 15px 0 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+:deep(.message-content) ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+:deep(.message-content) li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+:deep(.message-content) hr {
+  border: none;
+  border-top: 1px dashed #ddd;
+  margin: 15px 0;
+}
+
+:deep(.message-content) {
+  line-height: 1.6;
 }
 </style>

@@ -33,10 +33,10 @@ import { RouterLink } from 'vue-router';
           <RouterLink to="/main/service" custom v-slot="{ navigate }">
             <el-card shadow="hover" @click="navigate" class="custom-card">
               <div class="card-icon">
-                <el-icon><Service /></el-icon>
+                <el-icon><Van /></el-icon>
               </div>
-              <h2>智能客服</h2>
-              <p>24小时在线的智能服务助手</p>
+              <h2>出行助手</h2>
+              <p>智能规划行程，提供实时交通信息和旅行建议</p>
             </el-card>
           </RouterLink>
         </el-col>
