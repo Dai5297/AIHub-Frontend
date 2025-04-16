@@ -4,51 +4,62 @@ import { RouterLink } from 'vue-router';
 
 <template>
   <div class="home-container">
-    <h1 class="aihub-title">AIHub</h1>
+    <div class="hero-section">
+      <h1 class="aihub-title">AIHub</h1>
+      <p class="subtitle">智能助手平台</p>
+    </div>
     <div class="card-list">
-      <el-row>
-        <el-col :span="6">
+      <el-row :gutter="30">
+        <el-col :xs="24" :sm="12" :md="6" :lg="6">
           <RouterLink to="/main/ai" custom v-slot="{ navigate }">
-            <el-card shadow="hover" @click="navigate" class="custom-card">
+            <div class="feature-card" @click="navigate">
               <div class="card-icon">
                 <el-icon><ChatDotRound /></el-icon>
               </div>
-              <h2>AI 聊天</h2>
-              <p>与智能AI助手进行自然对话</p>
-            </el-card>
+              <div class="card-content">
+                <h2>AI 聊天</h2>
+                <p>与智能AI助手进行自然对话</p>
+              </div>
+            </div>
           </RouterLink>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6" :lg="6">
           <RouterLink to="/main/medical" custom v-slot="{ navigate }">
-            <el-card shadow="hover" @click="navigate" class="custom-card">
+            <div class="feature-card" @click="navigate">
               <div class="card-icon">
                 <el-icon><FirstAidKit /></el-icon>
               </div>
-              <h2>医疗专家</h2>
-              <p>提供专业的医疗咨询和诊断建议，助力健康生活。</p>
-            </el-card>
+              <div class="card-content">
+                <h2>医疗专家</h2>
+                <p>提供专业的医疗咨询和诊断建议，助力健康生活。</p>
+              </div>
+            </div>
           </RouterLink>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6" :lg="6">
           <RouterLink to="/main/service" custom v-slot="{ navigate }">
-            <el-card shadow="hover" @click="navigate" class="custom-card">
+            <div class="feature-card" @click="navigate">
               <div class="card-icon">
                 <el-icon><Van /></el-icon>
               </div>
-              <h2>出行助手</h2>
-              <p>智能规划行程，提供实时交通信息和旅行建议</p>
-            </el-card>
+              <div class="card-content">
+                <h2>出行助手</h2>
+                <p>智能规划行程，提供实时交通信息和旅行建议</p>
+              </div>
+            </div>
           </RouterLink>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :md="6" :lg="6">
           <RouterLink to="/main/pdf" custom v-slot="{ navigate }">
-            <el-card shadow="hover" @click="navigate" class="custom-card">
+            <div class="feature-card" @click="navigate">
               <div class="card-icon">
                 <el-icon><Document /></el-icon>
               </div>
-              <h2>ChatPDF</h2>
-              <p>智能文档阅读与问答系统</p>
-            </el-card>
+              <div class="card-content">
+                <h2>ChatPDF</h2>
+                <p>智能文档阅读与问答系统</p>
+              </div>
+            </div>
           </RouterLink>
         </el-col>
       </el-row>
@@ -60,61 +71,113 @@ import { RouterLink } from 'vue-router';
 .home-container {
   width: 100%;
   height: 100%;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4ecfb 100%);
+  padding: 2rem;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 4rem 0;
 }
 
 .aihub-title {
-  text-align: center; /* 水平居中 */
-  font-family: 'Arial', sans-serif; /* 字体选择 */
-  font-size: 50px; /* 字体大小 */
-  color: #b2b4ea; /* 文字颜色 */
-  letter-spacing: 2px; /* 字母间距 */
-  line-height: 1.2; /* 行高 */
-  padding-top: 50px; /* 上边距 */
+  font-family: 'Inter', 'Arial', sans-serif;
+  font-size: 4rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  color: #718096;
+  margin-bottom: 2rem;
 }
 
 .card-list {
-  margin-top: 50px;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-.custom-card {
-  margin: 50px;
-  width: 300px;
-  height: 300px;
+.feature-card {
   display: flex;
   flex-direction: column;
-  align-items: center; /* 水平居中 */
-  padding: 20px; /* 内部填充 */
-  border-radius: 8px; /* 圆角 */
-  background-color: #ffffff; /* 背景颜色 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
-  transition: transform 0.3s ease; /* 添加过渡效果 */
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  height: 100%;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  margin-bottom: 2rem;
 }
 
-.custom-card:hover {
-  transform: scale(1.05); /* 鼠标悬停时放大 */
-  cursor: pointer; /* 更改鼠标指针为手形 */
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
 }
 
 .card-icon {
-  text-align: center;
-  font-size: 40px; /* 图标大小 */
-  color: #1e90ff; /* 图标颜色 */
-  margin-bottom: 20px; /* 图标与标题之间的间距 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: rgba(71, 118, 230, 0.1);
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
 }
 
-.custom-card h2 {
-  text-align: center;
-  margin-bottom: 10px; /* 标题与介绍之间的间距 */
-  font-weight: bold; /* 加粗标题 */
-  color: #333; /* 标题颜色 */
+.card-icon .el-icon {
+  font-size: 2rem;
+  color: #4776E6;
 }
 
-.custom-card p {
-  text-align: center; /* 文本水平居中 */
-  color: #666; /* 文字颜色 */
+.card-content {
+  flex: 1;
+}
+
+.feature-card h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+}
+
+.feature-card p {
+  font-size: 1rem;
+  color: #718096;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .aihub-title {
+    font-size: 3rem;
+  }
+  
+  .subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .feature-card {
+    padding: 1.5rem;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { User } from '@element-plus/icons-vue'
+import { User, Key, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { RouterLink } from 'vue-router'
 import { getUserDetail, changePassword } from '@/api/layout.js'
@@ -61,23 +61,41 @@ onMounted(getUsrDetail)
   <div class="common-layout">
     <el-container>
       <el-header class="head">
-        <div class="logo">
-          <RouterLink to="/main">
-            <img src="@/assets/logo.png" alt="AIHub Logo" class="logo-img" />
-          </RouterLink>
+        <div class="header-container">
+          <div class="logo">
+            <RouterLink to="/main">
+              <img src="@/assets/logo.png" alt="AIHub Logo" class="logo-img" />
+              <span class="logo-text">AIHub</span>
+            </RouterLink>
+          </div>
+          <div class="header-right">
+            <div class="nav-links">
+              <RouterLink to="/main" class="nav-link" exact>首页</RouterLink>
+              <RouterLink to="/main/ai" class="nav-link">AI聊天</RouterLink>
+              <RouterLink to="/main/medical" class="nav-link">医疗专家</RouterLink>
+              <RouterLink to="/main/service" class="nav-link">出行助手</RouterLink>
+              <RouterLink to="/main/pdf" class="nav-link">PDF助手</RouterLink>
+            </div>
+            <el-dropdown class="user-menu">
+              <div class="user-avatar">
+                <el-icon class="avatar-icon"><User /></el-icon>
+                <span class="username">{{ username }}</span>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="dialogFormVisible = true">
+                    <el-icon><Key /></el-icon>
+                    <span>修改密码</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleLogout()" divided>
+                    <el-icon><SwitchButton /></el-icon>
+                    <span>退出登录</span>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
-        <el-dropdown class="user">
-          <span class="el-dropdown-link">
-            <el-icon><User /></el-icon>
-            <span class="username">{{ username }}</span>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="dialogFormVisible = true">修改密码</el-dropdown-item>
-              <el-dropdown-item @click="handleLogout()" divided>退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
       </el-header>
       <el-main class="main">
         <!--主体界面-->
@@ -116,60 +134,187 @@ onMounted(getUsrDetail)
 .common-layout {
   height: 100vh; /* 设置容器高度为视口高度 */
   overflow: hidden; /* 防止内部内容溢出 */
+  user-select: none; /* 禁止选中内容 */
+}
+
+/* 全局禁止内容选中 */
+:deep(*) {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .head {
+  padding: 0;
+  background-color: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
+  height: 64px;
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
-  align-items: center; /* 垂直居中 */
-  background-color: #8091b1;
-  padding: 10px 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  height: 100%;
+  padding: 0 20px;
 }
 
 .logo {
-  flex: 1;
   display: flex;
-  justify-content: flex-start;
   align-items: center;
 }
 
 .logo a {
   display: inline-flex;
   align-items: center;
-  width: 200px; /* 增加宽度 */
+  height: 60px;
+  padding: 5px 0;
+  text-decoration: none;
 }
 
 .logo-img {
-  width: 100%;
-  height: auto;
-  max-height: 150px; /* 增加最大高度 */
+  height: 90px;
+  width: auto;
   object-fit: contain;
-  padding: 5px 0; /* 添加垂直内边距 */
+  transition: transform 0.3s ease;
 }
 
-.user {
-  cursor: pointer;
-  margin-right: 15px;
+.logo-text {
+  font-size: 24px;
+  font-weight: 600;
+  margin-left: 10px;
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.el-dropdown-link {
-  color: white;
-  font-size: 16px;
-  outline: none;
+.logo a:hover .logo-img {
+  transform: scale(1.05);
+}
+
+.header-right {
   display: flex;
-  align-items: center; /* 垂直居中 */
-  gap: 5px; /* 图标和文字之间的间距 */
+  align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  margin-right: 30px;
+}
+
+.nav-link {
+  padding: 0 15px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #606266;
+  text-decoration: none;
+  line-height: 64px;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: #4776E6;
+}
+
+.nav-link:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 15px;
+  width: calc(100% - 30px);
+  height: 3px;
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  border-radius: 3px 3px 0 0;
+}
+
+/* 选中样式 */
+.nav-link.router-link-active {
+  color: #4776E6;
+  font-weight: 600;
+}
+
+.nav-link.router-link-exact-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 15px;
+  width: calc(100% - 30px);
+  height: 3px;
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  border-radius: 3px 3px 0 0;
+}
+
+/* 首页特殊处理 */
+a[href="/main"].nav-link {
+  color: #606266;
+  font-weight: 500;
+}
+
+a[href="/main"].nav-link.router-link-exact-active {
+  color: #4776E6;
+  font-weight: 600;
+}
+
+a[href="/main"].nav-link::after {
+  display: none;
+}
+
+a[href="/main"].router-link-exact-active::after {
+  display: block;
+}
+
+.user-menu {
+  cursor: pointer;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background-color: #f5f7fa;
+  transition: all 0.3s;
+}
+
+.user-avatar:hover {
+  background-color: #e6e8eb;
+}
+
+.avatar-icon {
+  font-size: 18px;
+  color: #8E54E9;
+  margin-right: 6px;
 }
 
 .username {
-  margin: 5px;
+  font-size: 14px;
+  color: #2d3748;
+  font-weight: 500;
 }
 
 .main {
-  background-color: #efefef;
+  background-color: #f5f7fa;
   height: calc(100vh - 64px); /* 计算主内容区域的高度，减去头部高度 */
   overflow-y: auto; /* 主内容区域添加垂直滚动条 */
+}
+
+/* 下拉菜单样式 */
+:deep(.el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+}
+
+:deep(.el-dropdown-menu__item .el-icon) {
+  margin-right: 8px;
+  font-size: 16px;
 }
 
 /* 路由切换动画 */

@@ -38,6 +38,14 @@ const sendMessage = () => {
 const clearChat = () => {
   emit('clear')
 }
+
+// 处理键盘事件
+const handleKeyDown = (e) => {
+  if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+    e.preventDefault()
+    sendMessage()
+  }
+}
 </script>
 
 <template>
@@ -50,10 +58,10 @@ const clearChat = () => {
         :placeholder="placeholder"
         :disabled="disabled"
         resize="none"
-        @keyup.enter.ctrl="sendMessage"
+        @keydown="handleKeyDown"
       />
       <div class="input-tools">
-        <el-tooltip content="发送消息 (Ctrl+Enter)">
+        <el-tooltip content="发送消息 (Enter)">
           <el-button
             :style="{ backgroundColor: themeColor, borderColor: themeColor }"
             class="round-button"
@@ -62,13 +70,12 @@ const clearChat = () => {
             @click="sendMessage"
           >
             <el-icon v-if="!loading"><Position /></el-icon>
-            <span v-else class="loading-text">处理中</span>
           </el-button>
         </el-tooltip>
       </div>
     </div>
     <div class="input-footer">
-      <span class="footer-tip">按 Ctrl+Enter 发送</span>
+      <span class="footer-tip">按 Enter 发送，Ctrl+Enter 换行</span>
       <el-button
         link
         size="small"

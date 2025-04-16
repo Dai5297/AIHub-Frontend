@@ -266,11 +266,14 @@ onMounted(async () => {
     <ChatHistory
       :histories="histories"
       :current-chat-id="currentChatId"
-      theme-color="#ff6b6b"
+      theme-color="#F56565"
       @new-chat="handleNewChat"
       @change-chat="handleChangeChat"
     />
     <div class="chat-body">
+      <div class="chat-header">
+        <h2>PDF 智能解析</h2>
+      </div>
       <div v-if="!currentPdf" class="upload-section">
         <el-upload
           ref="uploadRef"
@@ -279,33 +282,32 @@ onMounted(async () => {
           v-bind="uploadConfig"
           :on-change="handlePdfUpload"
         >
-          <el-icon class="upload-icon" style="color: #ff6b6b">
-            <Document />
-          </el-icon>
-          <div class="upload-text">
-            <h3>将PDF文件拖到此处，或点击上传</h3>
-            <p>单个文件不超过10MB</p>
+          <div class="upload-content">
+            <el-icon class="upload-icon">
+              <Document />
+            </el-icon>
+            <div class="upload-text">
+              <h3>将PDF文件拖到此处，或点击上传</h3>
+              <p>单个文件不超过10MB</p>
+            </div>
           </div>
         </el-upload>
       </div>
       <div v-else class="pdf-info">
         <div class="pdf-details">
-          <el-icon style="color: #ff6b6b">
-            <Document />
-          </el-icon>
-          <span>{{ currentPdf.name }}</span>
+          <el-icon><Document /></el-icon>
+          <span class="pdf-name">{{ currentPdf.name }}</span>
           <span class="pdf-size">{{ currentPdf.size }}</span>
         </div>
-        <el-button type="danger" link @click="handleRemovePdf"> 移除文件 </el-button>
+        <el-button type="danger" link @click="handleRemovePdf">移除文件</el-button>
       </div>
-      <ChatMessage :messages="messages" theme-color="#ff6b6b" />
+      <ChatMessage :messages="messages" theme-color="#F56565" />
       <div class="input-section">
         <ChatInput
-          style="margin-top: 20px"
           :loading="isLoading"
           :disabled="!currentPdf"
           :placeholder="currentPdf ? '请输入您的问题...' : '请先上传PDF文件'"
-          theme-color="#ff6b6b"
+          theme-color="#F56565"
           @send="handleSendMessage"
           @clear="handleClearChat"
         />
@@ -320,18 +322,33 @@ onMounted(async () => {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: #f5f7fa;
 }
 
 .chat-body {
-  margin-left: 10px;
+  margin-left: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background-color: #fff;
-  border-radius: 15px;
-  width: 80%;
+  border-radius: 16px;
+  width: 85%;
   height: 100%;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #edf2f7;
+  background-color: #ffffff;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
 }
 
 .upload-section {
@@ -339,7 +356,7 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   padding: 40px;
-  background-color: #f9f9f9;
+  background-color: #f8fafc;
   flex: 1;
 }
 
@@ -348,48 +365,85 @@ onMounted(async () => {
   max-width: 500px;
 }
 
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+}
+
 .upload-icon {
   font-size: 48px;
-  margin-bottom: 10px;
+  color: #F56565;
+  margin-bottom: 16px;
 }
 
 .upload-text h3 {
   font-size: 16px;
-  color: #606266;
+  color: #4a5568;
   margin-bottom: 8px;
+  font-weight: 500;
 }
 
 .upload-text p {
   font-size: 14px;
-  color: #909399;
+  color: #718096;
 }
 
 .pdf-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background-color: #f4f4f5;
-  border-bottom: 1px solid #e4e4e4;
+  padding: 16px 20px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #edf2f7;
 }
 
 .pdf-details {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .pdf-details .el-icon {
-  font-size: 20px;
+  font-size: 24px;
+  color: #F56565;
+}
+
+.pdf-name {
+  font-weight: 500;
+  color: #2d3748;
 }
 
 .pdf-size {
-  color: #909399;
+  color: #718096;
   font-size: 13px;
   margin-left: 8px;
 }
 
 .input-section {
-  border-top: 1px solid #eee;
+  border-top: 1px solid #edf2f7;
+  padding: 16px 0 0;
+  background-color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .chat-body {
+    width: 100%;
+    margin-left: 0;
+    border-radius: 0;
+  }
+  
+  .chat-container {
+    flex-direction: column;
+  }
+  
+  .upload-section {
+    padding: 20px;
+  }
+  
+  .pdf-uploader {
+    max-width: 100%;
+  }
 }
 </style>

@@ -269,13 +269,16 @@ onMounted(async () => {
     <ChatHistory
       :histories="histories"
       :current-chat-id="currentChatId"
-      theme-color="#409eff"
+      theme-color="#4776E6"
       @new-chat="handleNewChat"
       @change-chat="handleChangeChat"
       @delete-chat="handleDeleteChat"
     />
     <div class="chat-body">
-      <ChatMessage :messages="messages" theme-color="#409eff" />
+      <div class="chat-header">
+        <h2>AI 智能助手</h2>
+      </div>
+      <ChatMessage :messages="messages" theme-color="#4776E6" />
       <div class="input-section">
         <div class="search-options">
           <el-switch 
@@ -284,12 +287,12 @@ onMounted(async () => {
             inactive-text="本地搜索"
             :active-value="true"
             :inactive-value="false" 
-            style="--el-switch-on-color: #409eff; --el-switch-off-color: #909399;"
+            style="--el-switch-on-color: #4776E6; --el-switch-off-color: #909399;"
           />
         </div>
         <ChatInput
           :loading="isLoading"
-          theme-color="#409eff"
+          theme-color="#4776E6"
           @send="handleSendMessage"
           @clear="handleClearChat"
         />
@@ -304,11 +307,12 @@ onMounted(async () => {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: #f5f7fa;
 }
 
 .cursor {
   animation: blink 1s infinite;
-  color: #409eff;
+  color: #4776E6;
   display: inline;
   margin-left: 0;
   vertical-align: baseline;
@@ -325,30 +329,45 @@ onMounted(async () => {
 }
 
 .chat-body {
-  margin-left: 10px;
+  margin-left: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background-color: #fff;
-  border-radius: 15px;
-  width: 80%;
+  border-radius: 16px;
+  width: 85%;
   height: 100%;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #edf2f7;
+  background-color: #ffffff;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
 }
 
 .input-section {
-  border-top: 1px solid #eee;
+  border-top: 1px solid #edf2f7;
+  background-color: #ffffff;
 }
 
 .search-options {
-  padding: 8px 20px 0;
+  padding: 12px 20px 0;
   background-color: #fff;
   display: flex;
   align-items: center;
 }
 
 .search-options :deep(.el-switch) {
-  --el-switch-on-color: #409eff;
+  --el-switch-on-color: #4776E6;
 }
 
 .search-options :deep(.el-switch__label) {
@@ -357,17 +376,17 @@ onMounted(async () => {
 }
 
 .search-options :deep(.el-switch__label.is-active) {
-  color: #409eff;
+  color: #4776E6;
 }
 
 /* Styles for structured messages */
 :deep(.message-content) h3 {
-  color: #409eff;
+  color: #4776E6;
   margin: 15px 0 10px;
   font-size: 1.1em;
-  font-weight: bold;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
+  font-weight: 600;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 8px;
 }
 
 :deep(.message-content) ul {
@@ -377,16 +396,28 @@ onMounted(async () => {
 
 :deep(.message-content) li {
   margin-bottom: 8px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 :deep(.message-content) hr {
   border: none;
-  border-top: 1px dashed #ddd;
-  margin: 15px 0;
+  border-top: 1px dashed #e2e8f0;
+  margin: 16px 0;
 }
 
 :deep(.message-content) {
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .chat-body {
+    width: 100%;
+    margin-left: 0;
+    border-radius: 0;
+  }
+  
+  .chat-container {
+    flex-direction: column;
+  }
 }
 </style>

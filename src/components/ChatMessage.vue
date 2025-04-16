@@ -50,20 +50,35 @@ onUpdated(scrollToBottom)
         :key="index"
         :class="message.sender === 'user' ? 'message user-message' : 'message ai-message'"
       >
-        <div
-          :class="message.sender === 'user' ? 'bubble user-bubble' : 'bubble ai-bubble'"
-          :style="message.sender === 'user' ? { backgroundColor: themeColor } : null"
-        >
-          <div v-if="message.isTyping" class="typing-indicator">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+        <!-- AI消息 -->
+        <template v-if="message.sender === 'ai'">
+          <div class="sender-avatar ai-avatar">
+            <span>AI</span>
           </div>
-          <span class="message-content">
-            <span v-html="formatMessage(message.content)"></span>
-            <span v-if="message.isTyping" class="cursor">|</span>
-          </span>
-        </div>
+          <div class="bubble ai-bubble">
+            <div v-if="message.isTyping" class="typing-indicator">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+            <span class="message-content">
+              <span v-html="formatMessage(message.content)"></span>
+              <span v-if="message.isTyping" class="cursor">|</span>
+            </span>
+          </div>
+        </template>
+        
+        <!-- 用户消息 -->
+        <template v-else>
+          <div class="sender-avatar user-avatar">
+            <span>我</span>
+          </div>
+          <div class="bubble user-bubble" :style="{ backgroundColor: themeColor }">
+            <span class="message-content">
+              <span v-html="formatMessage(message.content)"></span>
+            </span>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -71,26 +86,28 @@ onUpdated(scrollToBottom)
 
 <style scoped>
 .chat-message {
-  border-bottom: 1px solid #dddddd;
   width: 100%;
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background-color: #f9f9f9;
+  padding: 16px;
+  background-color: #f8fafc;
 }
 
 .message-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   min-height: 100%;
-  padding-bottom: 20px;
+  padding-bottom: 24px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .message {
   display: flex;
-  gap: 10px;
-  max-width: 90%;
+  gap: 12px;
+  max-width: 92%;
+  align-items: flex-start;
 }
 
 .user-message {
@@ -102,47 +119,51 @@ onUpdated(scrollToBottom)
   align-self: flex-start;
 }
 
-.avatar {
-  min-width: 40px;
-  height: 40px;
+.sender-avatar {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 .user-avatar {
-  background-color: #4a90e2;
+  background-color: #4776E6;
+  color: white;
 }
 
 .ai-avatar {
-  background-color: #42b983;
+  background-color: #8E54E9;
+  color: white;
 }
 
 .bubble {
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: 18px;
   position: relative;
   word-break: break-word;
-  transition: opacity 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  max-width: calc(100% - 48px);
 }
 
 .user-bubble {
   color: white;
-  border-top-right-radius: 5px;
+  border-top-right-radius: 4px;
 }
 
 .ai-bubble {
   background-color: white;
-  color: #333;
-  border-top-left-radius: 5px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: #334155;
+  border-top-left-radius: 4px;
 }
 
 .ai-bubble p {
-  margin: 5px 0;
+  margin: 6px 0;
 }
 
 .ai-bubble p:first-child {
@@ -156,12 +177,14 @@ onUpdated(scrollToBottom)
 .typing-indicator {
   display: flex;
   gap: 4px;
+  align-items: center;
+  height: 24px;
 }
 
 .dot {
   width: 6px;
   height: 6px;
-  background-color: #666;
+  background-color: #64748b;
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out;
 }
@@ -187,19 +210,16 @@ onUpdated(scrollToBottom)
 
 .message-content {
   display: inline-block;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 15px;
 }
 
 .cursor {
   display: inline;
   animation: blink 1s infinite;
-  color: #666;
-  margin-left: 0;
-  vertical-align: baseline;
-  font-weight: normal;
-  line-height: 1;
+  color: #64748b;
   margin-left: 2px;
-  vertical-align: text-bottom;
+  vertical-align: middle;
 }
 
 @keyframes blink {
@@ -210,5 +230,69 @@ onUpdated(scrollToBottom)
   50% {
     opacity: 0;
   }
+}
+
+/* 代码块美化 */
+:deep(pre) {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+:deep(code) {
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+}
+
+:deep(a) {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+:deep(a:hover) {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .message {
+    max-width: 100%;
+  }
+  
+  .bubble {
+    max-width: calc(100% - 40px);
+  }
+}
+
+/* 特殊样式-医疗主题 */
+:deep(.medical-tip) {
+  background-color: #eef7ff;
+  border-left: 4px solid #409eff;
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+:deep(.medical-warning) {
+  background-color: #fef6e9;
+  border-left: 4px solid #e6a23c;
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #8a5a00;
+}
+
+:deep(.medical-term) {
+  color: #409eff;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: help;
 }
 </style>

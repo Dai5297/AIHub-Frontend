@@ -33,7 +33,7 @@ const histories = ref([
 const messages = ref([
   {
     sender: 'ai',
-    content: `<p>您好！我是您的AI医疗助手，您可以向我咨询任何健康相关问题，我会尽力为您提供专业建议。</p>`,
+    content: `<p>您好！我是您的AI医疗顾问，可以为您提供健康咨询和医学知识解答。请注意，我的建议仅供参考，严重症状请及时就医。有什么健康问题我可以帮您解答吗？</p>`,
   },
 ])
 
@@ -167,7 +167,7 @@ const handleNewChat = async () => {
   messages.value = [
     {
       sender: 'ai',
-      content: `<p>您好！我是您的AI医疗助手，您可以向我咨询任何健康相关问题，我会尽力为您提供专业建议。</p>`,
+      content: `<p>您好！我是您的AI医疗顾问，可以为您提供健康咨询和医学知识解答。请注意，我的建议仅供参考，严重症状请及时就医。有什么健康问题我可以帮您解答吗？</p>`,
     },
   ]
   const res = await sendNewChat(newId)

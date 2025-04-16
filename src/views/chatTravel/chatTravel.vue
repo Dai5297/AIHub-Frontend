@@ -27,7 +27,7 @@ const histories = ref([
 const messages = ref([
   {
     sender: 'ai',
-    content: `<p>您好！我是您的智能出行助手，我可以帮您规划行程、查询交通信息、推荐旅游景点等。请问您需要什么帮助？</p>`,
+    content: `<p>您好！我是您的AI出行顾问，可以为您提供专业的旅行规划服务。我能帮您制定行程计划、查询实时交通信息、推荐景点美食，以及提供各类旅行建议。无论是商务出差还是休闲旅游，我都能为您提供贴心的出行帮助。请问您计划去哪里旅行呢？</p>`,
   },
 ])
 
@@ -167,7 +167,7 @@ const handleNewChat = async () => {
   messages.value = [
     {
       sender: 'ai',
-      content: `<p>您好！我是您的智能出行助手，我可以帮您规划行程、查询交通信息、推荐旅游景点等。请问您需要什么帮助？</p>`,
+      content: `<p>您好！我是您的AI出行顾问，可以为您提供专业的旅行规划服务。我能帮您制定行程计划、查询实时交通信息、推荐景点美食，以及提供各类旅行建议。无论是商务出差还是休闲旅游，我都能为您提供贴心的出行帮助。请问您计划去哪里旅行呢？</p>`,
     },
   ]
   const res = await sendNewChat(newId)
@@ -265,17 +265,20 @@ onMounted(async () => {
     <ChatHistory
       :histories="histories"
       :current-chat-id="currentChatId"
-      theme-color="#b265f8"
+      theme-color="#8E54E9"
       @new-chat="handleNewChat"
       @change-chat="handleChangeChat"
       @delete-chat="handleDeleteChat"
     />
     <div class="chat-body">
-      <ChatMessage :messages="messages" theme-color="#b265f8" />
+      <div class="chat-header">
+        <h2>出行助手</h2>
+      </div>
+      <ChatMessage :messages="messages" theme-color="#8E54E9" />
       <div class="input-section">
         <ChatInput
           :loading="isLoading"
-          theme-color="#b265f8"
+          theme-color="#8E54E9"
           @send="handleSendMessage"
           @clear="handleClearChat"
         />
@@ -290,11 +293,12 @@ onMounted(async () => {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: #f5f7fa;
 }
 
 .cursor {
   animation: blink 1s infinite;
-  color: #b265f8;
+  color: #8E54E9;
   display: inline;
   margin-left: 0;
   vertical-align: baseline;
@@ -311,50 +315,45 @@ onMounted(async () => {
 }
 
 .chat-body {
-  margin-left: 10px;
+  margin-left: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background-color: #fff;
-  border-radius: 15px;
-  width: 80%;
+  border-radius: 16px;
+  width: 85%;
   height: 100%;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #edf2f7;
+  background-color: #ffffff;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
 }
 
 .input-section {
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.search-options {
-  padding: 8px 20px 0;
-  background-color: #fff;
-  display: flex;
-  align-items: center;
-}
-
-.search-options :deep(.el-switch) {
-  --el-switch-on-color: #b265f8;
-}
-
-.search-options :deep(.el-switch__label) {
-  color: #606266;
-  font-size: 14px;
-}
-
-.search-options :deep(.el-switch__label.is-active) {
-  color: #b265f8;
+  padding-top: 16px;
+  border-top: 1px solid #edf2f7;
+  background-color: #ffffff;
 }
 
 /* Styles for structured messages */
 :deep(.message-content) h3 {
-  color: #b265f8;
+  color: #8E54E9;
   margin: 15px 0 10px;
   font-size: 1.1em;
-  font-weight: bold;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
+  font-weight: 600;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 8px;
 }
 
 :deep(.message-content) ul {
@@ -364,16 +363,28 @@ onMounted(async () => {
 
 :deep(.message-content) li {
   margin-bottom: 8px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 :deep(.message-content) hr {
   border: none;
-  border-top: 1px dashed #ddd;
-  margin: 15px 0;
+  border-top: 1px dashed #e2e8f0;
+  margin: 16px 0;
 }
 
 :deep(.message-content) {
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .chat-body {
+    width: 100%;
+    margin-left: 0;
+    border-radius: 0;
+  }
+  
+  .chat-container {
+    flex-direction: column;
+  }
 }
 </style>
