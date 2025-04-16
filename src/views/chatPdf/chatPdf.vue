@@ -23,7 +23,7 @@ const histories = ref([
 ])
 
 const isFirstMessage = ref()
-const currentChatId = ref('300001')
+const currentChatId = ref('')
 
 // 示例消息数据
 const messages = ref([])
@@ -89,9 +89,12 @@ const handlePdfUpload = async (file) => {
 
   try {
     const formData = new FormData()
+    const newId = Date.now().toString().slice(-6)
+    currentChatId.value = newId
     // 确保获取原始文件对象（兼容Element Plus组件）
     const rawFile = file.raw || file
     formData.append('file', rawFile) // 字段名与后端@RequestParam一致[4,8](@ref)
+    formData.append('memoryId', newId)
 
     // 调用上传接口（强制multipart/form-data）
     const res = await uploadPdfFile(formData)
