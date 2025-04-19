@@ -1,5 +1,5 @@
 <script setup>
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElLoading } from 'element-plus'
 import { Document, Upload } from '@element-plus/icons-vue'
 import ChatMessage from '@/components/ChatMessage.vue'
 import ChatInput from '@/components/ChatInput.vue'
@@ -11,27 +11,23 @@ import {
   getDetailHistory,
   getChatHistory,
   uploadPdfFile,
+  deleteChat,
+  sendNewChat,
 } from '@/api/chatPdf.js'
 import { marked } from 'marked'
 
-// 聊天历史记录数据
-const histories = ref([
-  {
-    id: '300001',
-    title: '新对话',
-  },
-])
-
-const isFirstMessage = ref()
+// 基础状态变量
+const isFirstMessage = ref(false)
 const currentChatId = ref('')
-
-// 示例消息数据
-const messages = ref([])
-
-// PDF文件状态
-const currentPdf = ref(null)
+const isOnlineSearch = ref(true)
+const histories = ref([])
 const isLoading = ref(false)
+
+// PDF相关状态
+const currentPdf = ref(null)
 const uploadRef = ref(null)
+const uploadProgress = ref(0)
+const isUploading = ref(false)
 
 // 上传配置
 const uploadConfig = {
@@ -39,6 +35,21 @@ const uploadConfig = {
   'auto-upload': false,
   limit: 1,
 }
+
+// 欢迎语
+const messages = ref([
+  {
+    sender: 'ai',
+    content: `<p>您好，我是PDF智能解析助手，请上传您需要分析的PDF文件</p>`,
+  },
+])
+
+// Markdown配置
+marked.setOptions({
+  breaks: false,
+  gfm: true,
+  headerIds: false,
+})
 
 // 打字机效果函数
 const addStreamingMessage = (content) => {
@@ -48,14 +59,15 @@ const addStreamingMessage = (content) => {
     isTyping: true,
   }
   messages.value.push(aiMessage)
-  // 立即触发更新以显示等待动画
   messages.value = [...messages.value]
 
   let index = 0
   const intervalId = setInterval(() => {
     if (index < content.length) {
-      // 使用marked解析Markdown内容
       aiMessage.content = marked(content.substring(0, index + 1))
+        .replace(/\n$/, '')
+        .replace(/<\/p>\n/g, '</p>')
+        .replace(/(<[^>]+>)\n/g, '$1')
       index++
       messages.value = [...messages.value]
     } else {
@@ -66,19 +78,20 @@ const addStreamingMessage = (content) => {
   }, 30)
 }
 
-// 上传处理函数修改
+// PDF上传处理
 const handlePdfUpload = async (file) => {
-  // 强化文件类型验证（增加MIME类型检测）
-  const isPdf = file.type === 'application/pdf' ||
-      (file.name && file.name.toLowerCase().endsWith('.pdf')) ||
-      (file.raw?.type === 'application/pdf') // 针对Element Plus组件特性验证[3,5](@ref)
+  // 文件类型验证
+  const isPdf =
+    file.type === 'application/pdf' ||
+    (file.name && file.name.toLowerCase().endsWith('.pdf')) ||
+    file.raw?.type === 'application/pdf'
 
   if (!isPdf) {
     ElMessage.error('仅支持PDF格式文件！')
     return false
   }
 
-  // 强化文件大小验证（精确字节计算）
+  // 文件大小验证
   const MAX_SIZE_MB = 10
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
     ElMessage.error(`文件大小不能超过${MAX_SIZE_MB}MB！`)
@@ -86,32 +99,112 @@ const handlePdfUpload = async (file) => {
   }
 
   isLoading.value = true
+  isUploading.value = true
+  uploadProgress.value = 0
 
   try {
-    const formData = new FormData()
-    const newId = Date.now().toString().slice(-6)
-    currentChatId.value = newId
-    // 确保获取原始文件对象（兼容Element Plus组件）
-    const rawFile = file.raw || file
-    formData.append('file', rawFile) // 字段名与后端@RequestParam一致[4,8](@ref)
-    formData.append('memoryId', newId)
-
-    // 调用上传接口（强制multipart/form-data）
-    const res = await uploadPdfFile(formData)
-
-    if (res.code === 200) {
-      // 处理成功逻辑...
+    // 检查是否已有选中的对话
+    const currentHistory = histories.value.find(h => h.id === currentChatId.value)
+    
+    // 确定使用的ID和memoryId
+    let newId, memoryId;
+    
+    if (currentHistory && currentHistory.title === '新对话') {
+      // 如果当前已选中一个"新对话"，则使用该对话的ID和memoryId
+      newId = currentHistory.id
+      memoryId = currentHistory.memoryId
     } else {
-      ElMessage.error(res.msg || `上传失败（错误码：${res.code}）`)
+      // 否则创建新的ID和memoryId
+      newId = Date.now().toString().slice(-6)
+      memoryId = Date.now().toString()
+      
+      // 清除现有的新对话
+      histories.value = histories.value.filter(item => item.title !== '新对话')
+      
+      // 添加新对话到历史记录
+      histories.value.unshift({
+        id: newId,
+        title: '新对话',
+        memoryId: memoryId,
+      })
+      
+      // 设置当前会话ID
+      currentChatId.value = newId
+    }
+
+    // 获取原始文件对象
+    const rawFile = file.raw || file
+    const fileName = rawFile.name
+
+    // 创建进度监听器
+    const progressListener = (event) => {
+      if (event.lengthComputable) {
+        uploadProgress.value = Math.round((event.loaded / event.total) * 100)
+      }
+    }
+
+    // 添加进度监听
+    window.addEventListener('progress', progressListener, false)
+
+    try {
+      // 使用封装好的API函数上传文件
+      const response = await uploadPdfFile({
+        file: rawFile,
+        memoryId: memoryId,
+        fileName: fileName
+      })
+      
+      // 处理上传成功
+      if (response.code === 200) {
+        ElMessage.success('文件上传成功！')
+        
+        // 保存PDF信息，确保使用一致的memoryId
+        currentPdf.value = {
+          name: fileName,
+          size: `${(rawFile.size / 1024 / 1024).toFixed(2)}MB`,
+          id: newId,
+          memoryId: memoryId,
+        }
+
+        // 设置欢迎消息
+        messages.value = [
+          {
+            sender: 'ai',
+            content: `<p>我已经成功读取了您的PDF文件 <strong>${fileName}</strong>。现在您可以问我关于这份文档的任何问题，例如:</p><ul><li>这份文档的主要内容是什么？</li><li>请总结一下第X页的要点</li><li>文档中关于X主题的内容在哪里？</li></ul><p>请在下方输入您的问题。</p>`,
+          },
+        ]
+        
+        // 创建新会话或更新现有会话，确保使用相同的memoryId
+        try {
+          if (currentHistory && currentHistory.title === '新对话') {
+            // 如果使用现有的"新对话"，则只更新PDF信息而不创建新会话
+            console.log('使用现有的新对话，无需创建新会话')
+          } else {
+            // 如果是新创建的对话，则调用API创建新会话
+            await sendNewChat({
+              id: newId,
+              memoryId: memoryId
+            })
+          }
+        } catch (error) {
+          console.error('创建对话失败:', error)
+        }
+      } else {
+        ElMessage.error(response.msg || `上传失败（错误码：${response.code}）`)
+        currentPdf.value = null
+      }
+    } finally {
+      // 移除进度监听
+      window.removeEventListener('progress', progressListener)
     }
   } catch (error) {
     console.error('上传异常:', error)
-    // 细化错误类型判断
-    const msg = error.response?.data?.message ||
-        (error.code === 'ECONNABORTED' ? '请求超时' : '服务器异常')
-    ElMessage.error(`上传失败：${msg}`)
+    ElMessage.error(`上传失败：${error.message || '服务器异常'}`)
+    currentPdf.value = null
   } finally {
     isLoading.value = false
+    isUploading.value = false
+    uploadProgress.value = 0
   }
 
   return false
@@ -120,7 +213,12 @@ const handlePdfUpload = async (file) => {
 // 移除PDF
 const handleRemovePdf = () => {
   currentPdf.value = null
-  messages.value = []
+  messages.value = [
+    {
+      sender: 'ai',
+      content: `<p>您好，我是PDF智能解析助手，请上传您需要分析的PDF文件</p>`,
+    },
+  ]
 }
 
 // 发送消息
@@ -142,53 +240,70 @@ const handleSendMessage = async (message) => {
 
   isLoading.value = true
 
-  // 调用 API 发送消息
+  // 显示加载动画
+  const loadingInstance = ElLoading.service({
+    fullscreen: true,
+    lock: true,
+    text: '正在处理您的问题...',
+    background: 'rgba(255, 255, 255, 0.8)',
+  })
+
+  // 首先从对话历史中获取memoryId，确保与handleChangeChat中使用的一致
+  const currentHistory = histories.value.find(h => h.id === currentChatId.value)
+  // 如果历史记录中存在，则使用历史记录中的memoryId，否则才使用PDF对象中的
+  const memoryId = currentHistory?.memoryId || currentPdf.value.memoryId
+  
+  // 准备请求数据
   const data = {
     message: message,
-    pdfName: currentPdf.value ? currentPdf.value.name : '',
-    chatId: currentChatId.value,
+    pdfName: currentPdf.value.name,
+    memoryId: memoryId,
+    isOnlineSearch: isOnlineSearch.value
   }
 
   try {
-    try {
-      const stream = await sendMessage(data)
+    const stream = await sendMessage(data)
+    const reader = stream.getReader()
+    const decoder = new TextDecoder()
+    let result = ''
 
-      // Handle streaming response
-      const reader = stream.getReader()
-      const decoder = new TextDecoder()
-      let result = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        result += chunk
-      }
-
-      addStreamingMessage(result)
-      reader.releaseLock()
-    } catch (error) {
-      ElMessage.error('请求失败: ' + error.message)
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      result += chunk
     }
+
+    // 添加AI回复
+    addStreamingMessage(result)
+    reader.releaseLock()
   } catch (error) {
-    ElMessage.error('网络错误，请稍后重试')
-    console.error(error)
+    // 添加错误消息
+    messages.value.push({
+      sender: 'ai',
+      content: `<p>抱歉，请求失败: ${error.message}</p>`,
+    })
+    ElMessage.error('请求失败: ' + error.message)
   } finally {
     isLoading.value = false
+    loadingInstance.close()
   }
 
-  // 如果为第一个对话则发送请求获取对话标题
+  // 处理第一条消息的标题更新
   if (isFirstMessage.value) {
-    const res = await getChatTitle()
-    if (res.code === 200) {
-      histories.value.forEach((item) => {
-        if (item.title === '新对话') {
-          item.title = res.data.title
+    try {
+      const res = await getChatTitle(data)
+      if (res.code === 200) {
+        const newHistories = [...histories.value]
+        for (let i = 0; i < newHistories.length; i++) {
+          if (newHistories[i].id === currentChatId.value) {
+            newHistories[i].title = res.data
+          }
         }
-      })
-    } else {
-      ElMessage.error('请求失败，请稍后重试')
+        histories.value = newHistories
+      }
+    } catch (error) {
+      console.error('获取标题失败:', error)
     }
     isFirstMessage.value = false
   }
@@ -196,67 +311,210 @@ const handleSendMessage = async (message) => {
 
 // 清空对话
 const handleClearChat = () => {
-  messages.value = []
+  if (currentPdf.value) {
+    messages.value = [
+      {
+        sender: 'ai',
+        content: `<p>我已经成功读取了您的PDF文件 <strong>${currentPdf.value.name}</strong>。请问有什么可以帮助您的？</p>`,
+      },
+    ]
+  } else {
+    messages.value = [
+      {
+        sender: 'ai',
+        content: `<p>您好，我是PDF智能解析助手，请上传您需要分析的PDF文件</p>`,
+      },
+    ]
+  }
 }
 
 // 创建新对话
-const handleNewChat = () => {
+const handleNewChat = async () => {
   if (histories.value.some((item) => item.title === '新对话')) {
     ElMessage.error('您已经创建了一个新的对话')
     return
   }
+  
   const newId = Date.now().toString().slice(-6)
+  const memoryId = Date.now().toString()
+  
   currentChatId.value = newId
-  histories.value.push({
-    id: newId,
-    title: `新对话`,
-  })
-  messages.value = []
   currentPdf.value = null
+  
+  histories.value.unshift({
+    id: newId,
+    title: '新对话',
+    memoryId: memoryId,
+  })
+  
+  messages.value = [
+    {
+      sender: 'ai',
+      content: `<p>您好，我是PDF智能解析助手，请上传您需要分析的PDF文件</p>`,
+    },
+  ]
+  
+  try {
+    await sendNewChat({
+      id: newId,
+      memoryId: memoryId
+    })
+  } catch (error) {
+    console.error('创建对话失败:', error)
+    ElMessage.error('创建对话失败，请重试')
+  }
 }
 
 // 切换对话
-const handleChangeChat = async (id) => {
+const handleChangeChat = async ({ id }) => {
   currentChatId.value = id
-  const res = await getDetailHistory(id)
-  if (res.code === 200) {
-    messages.value = res.data.messages
-    if (res.data.pdf) {
-      currentPdf.value = res.data.pdf
-    } else {
-      currentPdf.value = null
+  messages.value = []
+  isLoading.value = true
+  
+  const loadingInstance = ElLoading.service({
+    fullscreen: true,
+    lock: true,
+    text: '加载对话历史中...',
+    background: 'rgba(255, 255, 255, 0.8)',
+  })
+  
+  try {
+    // 先从历史记录中查找与当前ID匹配的记录，确保获取正确的memoryId
+    const historyItem = histories.value.find(h => h.id === id)
+    if (!historyItem) {
+      throw new Error('找不到对应的对话历史')
     }
-  } else {
-    ElMessage.error('请求失败，请稍后重试')
-  }
-}
-
-// 获取对话信息
-const getHistorty = async () => {
-  const res = await getChatHistory()
-  if (res.code === 200) {
-    histories.value = res.data
-    if (res.data.length > 0) {
-      currentChatId.value = res.data[0].id
-      const resDetail = await getDetailHistory(res.data[0].id)
-      if (resDetail.code === 200) {
-        messages.value = resDetail.data.messages
-        if (resDetail.data.pdf) {
-          currentPdf.value = resDetail.data.pdf
+    
+    // 使用历史记录中的memoryId作为请求参数
+    const effectiveMemoryId = historyItem.memoryId
+    
+    // 根据ID查找详细历史
+    const res = await getDetailHistory({ id })
+    
+    if (res.code === 200) {
+      // 处理PDF信息，使用历史记录中的memoryId而不是生成新的
+      if (res.data.fileName) {
+        currentPdf.value = {
+          name: res.data.fileName,
+          size: '',
+          id: id,
+          // 始终使用历史记录中的memoryId，确保一致性
+          memoryId: effectiveMemoryId,
         }
       } else {
-        ElMessage.error('请求失败，请稍后重试')
+        currentPdf.value = null
       }
+      
+      // 处理消息历史
+      const historyData = res.data.historyVos || (Array.isArray(res.data) ? res.data : [])
+      
+      if (historyData.length > 0) {
+        const formattedMessages = historyData.map(message => {
+          if (message.sender === 'ai') {
+            message.content = marked(message.content || '')
+              .replace(/\n$/, '')
+              .replace(/<\/p>\n/g, '</p>')
+              .replace(/(<[^>]+>)\n/g, '$1')
+          }
+          return message
+        })
+        
+        messages.value = formattedMessages
+      } else {
+        messages.value = [
+          {
+            sender: 'ai',
+            content: currentPdf.value
+              ? `<p>已加载PDF文件: <strong>${currentPdf.value.name}</strong>，请问有什么可以帮助您的？</p>`
+              : '<p>您好，我是PDF智能解析助手，请上传您需要分析的PDF文件</p>',
+          },
+        ]
+      }
+    } else {
+      ElMessage.error(res.msg || '获取对话历史失败')
+      messages.value = [
+        {
+          sender: 'ai',
+          content: '<p>加载对话历史失败，请重试</p>',
+        },
+      ]
     }
-  } else {
-    ElMessage.error('请求失败，请稍后重试')
+  } catch (error) {
+    ElMessage.error(`加载失败: ${error.message}`)
+    messages.value = [
+      {
+        sender: 'ai',
+        content: '<p>加载对话历史时发生错误</p>',
+      },
+    ]
+  } finally {
+    isLoading.value = false
+    loadingInstance.close()
   }
 }
 
+// 删除对话
+const handleDeleteChat = async (payload) => {
+  try {
+    const { id } = payload
+    const res = await deleteChat(id)
+
+    if (res.code === 200) {
+      ElMessage.success('删除成功')
+      histories.value = histories.value.filter(item => item.id !== id)
+
+      if (currentChatId.value === id) {
+        if (histories.value.length > 0) {
+          await handleChangeChat({
+            id: histories.value[0].id,
+          })
+        } else {
+          await handleNewChat()
+        }
+      }
+    } else {
+      ElMessage.error(res.msg || '删除失败')
+    }
+  } catch (error) {
+    ElMessage.error(`删除失败: ${error.message}`)
+  }
+}
+
+// 获取聊天历史
+const getHistory = async () => {
+  try {
+    const res = await getChatHistory()
+    
+    if (res.code === 200) {
+      histories.value = res.data.map(item => ({
+        id: item.id,
+        title: item.title,
+        memoryId: item.memoryId || Date.now().toString(),
+      }))
+      
+      if (histories.value.length > 0) {
+        currentChatId.value = histories.value[0].id
+      }
+    }
+  } catch (error) {
+    console.error('获取历史记录失败:', error)
+    ElMessage.error('获取历史记录失败')
+  }
+}
+
+// 页面加载
 onMounted(async () => {
-  await getHistorty()
-  if (messages.value.length === 0) {
-    isFirstMessage.value = true
+  await getHistory()
+
+  if (currentChatId.value) {
+    const target = histories.value.find(h => h.id === currentChatId.value)
+    if (target?.memoryId) {
+      await handleChangeChat({
+        id: currentChatId.value,
+      })
+    }
+  } else if (histories.value.length === 0) {
+    await handleNewChat()
   }
 })
 </script>
@@ -269,6 +527,7 @@ onMounted(async () => {
       theme-color="#F56565"
       @new-chat="handleNewChat"
       @change-chat="handleChangeChat"
+      @delete-chat="handleDeleteChat"
     />
     <div class="chat-body">
       <div class="chat-header">
@@ -292,12 +551,32 @@ onMounted(async () => {
             </div>
           </div>
         </el-upload>
+        <!-- 上传进度条 -->
+        <div v-if="isUploading" class="upload-progress">
+          <el-progress
+            :percentage="uploadProgress"
+            :stroke-width="8"
+            status="success"
+            :show-text="true"
+            :color="'#F56565'"
+          ></el-progress>
+          <div class="progress-status">PDF文件上传中，请稍候...</div>
+        </div>
       </div>
       <div v-else class="pdf-info">
         <div class="pdf-details">
           <el-icon><Document /></el-icon>
           <span class="pdf-name">{{ currentPdf.name }}</span>
           <span class="pdf-size">{{ currentPdf.size }}</span>
+          <a
+            v-if="currentPdf.url"
+            :href="currentPdf.url"
+            target="_blank"
+            class="view-pdf-link"
+            title="在新窗口查看PDF"
+          >
+            查看原文件
+          </a>
         </div>
         <el-button type="danger" link @click="handleRemovePdf">移除文件</el-button>
       </div>
@@ -353,6 +632,7 @@ onMounted(async () => {
 
 .upload-section {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 40px;
@@ -374,7 +654,7 @@ onMounted(async () => {
 
 .upload-icon {
   font-size: 48px;
-  color: #F56565;
+  color: #f56565;
   margin-bottom: 16px;
 }
 
@@ -388,6 +668,24 @@ onMounted(async () => {
 .upload-text p {
   font-size: 14px;
   color: #718096;
+}
+
+/* 进度条样式 */
+.upload-progress {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 24px;
+  padding: 16px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.progress-status {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #718096;
+  text-align: center;
 }
 
 .pdf-info {
@@ -407,7 +705,7 @@ onMounted(async () => {
 
 .pdf-details .el-icon {
   font-size: 24px;
-  color: #F56565;
+  color: #f56565;
 }
 
 .pdf-name {
@@ -419,6 +717,23 @@ onMounted(async () => {
   color: #718096;
   font-size: 13px;
   margin-left: 8px;
+}
+
+.view-pdf-link {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f8fafc;
+  color: #f56565;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1px solid #f56565;
+  white-space: nowrap;
+}
+
+.view-pdf-link:hover {
+  background-color: #f56565;
+  color: white;
 }
 
 .input-section {
@@ -433,16 +748,20 @@ onMounted(async () => {
     margin-left: 0;
     border-radius: 0;
   }
-  
+
   .chat-container {
     flex-direction: column;
   }
-  
+
   .upload-section {
     padding: 20px;
   }
-  
+
   .pdf-uploader {
+    max-width: 100%;
+  }
+
+  .upload-progress {
     max-width: 100%;
   }
 }

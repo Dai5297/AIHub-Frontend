@@ -1,5 +1,8 @@
 <script setup>
 import { nextTick } from 'vue'
+import { DocumentCopy } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { ref, onUpdated, onMounted } from 'vue'
 
 // 定义props用于接收消息数据
 defineProps({
@@ -27,19 +30,77 @@ const formatMessage = (content) => {
     .replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '<br>') // 转换换行为<br>
 }
 
-// 自动滚动到最新消息
-import { ref, onUpdated } from 'vue'
+// 复制消息内容
+const copyContent = (content) => {
+  try {
+    navigator.clipboard.writeText(content.replace(/<[^>]+>/g, ''))
+    ElMessage.success('复制成功')
+  } catch (error) {
+    ElMessage.error('复制失败')
+  }
+}
+
+// 复制代码块内容
+const copyCodeBlock = (codeText) => {
+  try {
+    navigator.clipboard.writeText(codeText)
+    ElMessage.success('代码复制成功')
+  } catch (error) {
+    ElMessage.error('复制失败')
+  }
+}
+
 const messageContainer = ref(null)
 
 // 监听消息变化，自动滚动到底部
 const scrollToBottom = async () => {
-  await nextTick() // 等待DOM更新[3](@ref)
+  await nextTick() // 等待DOM更新
   if (messageContainer.value) {
     messageContainer.value.scrollTop = messageContainer.value.scrollHeight
   }
 }
 
-onUpdated(scrollToBottom)
+// 在DOM更新后为代码块添加复制按钮
+const addCopyButtonsToCodeBlocks = () => {
+  if (!messageContainer.value) return
+  
+  const codeBlocks = messageContainer.value.querySelectorAll('pre')
+  codeBlocks.forEach(block => {
+    // 检查是否已经添加了复制按钮
+    if (block.querySelector('.code-copy-button')) return
+    
+    // 创建复制按钮
+    const copyButton = document.createElement('button')
+    copyButton.className = 'code-copy-button'
+    copyButton.innerHTML = '<i class="el-icon"><svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64v-64h64z"></path><path fill="currentColor" d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path></svg></i>'
+    copyButton.title = '复制代码'
+    
+    // 添加点击事件
+    copyButton.addEventListener('click', () => {
+      // 使用常规JavaScript获取代码文本
+      const codeElement = block.querySelector('code')
+      const codeText = codeElement ? codeElement.textContent : block.textContent
+      copyCodeBlock(codeText)
+    })
+    
+    // 将按钮添加到代码块
+    block.style.position = 'relative'
+    block.appendChild(copyButton)
+  })
+}
+
+onUpdated(() => {
+  scrollToBottom()
+  nextTick(() => {
+    addCopyButtonsToCodeBlocks()
+  })
+})
+
+onMounted(() => {
+  nextTick(() => {
+    addCopyButtonsToCodeBlocks()
+  })
+})
 </script>
 
 <template>
@@ -64,10 +125,13 @@ onUpdated(scrollToBottom)
             <span class="message-content">
               <span v-html="formatMessage(message.content)"></span>
               <span v-if="message.isTyping" class="cursor">|</span>
+              <el-icon class="copy-button" :size="16" @click="copyContent(message.content)">
+                <DocumentCopy />
+              </el-icon>
             </span>
           </div>
         </template>
-        
+
         <!-- 用户消息 -->
         <template v-else>
           <div class="sender-avatar user-avatar">
@@ -76,6 +140,9 @@ onUpdated(scrollToBottom)
           <div class="bubble user-bubble" :style="{ backgroundColor: themeColor }">
             <span class="message-content">
               <span v-html="formatMessage(message.content)"></span>
+              <el-icon class="copy-button" :size="16" @click="copyContent(message.content)">
+                <DocumentCopy />
+              </el-icon>
             </span>
           </div>
         </template>
@@ -132,12 +199,12 @@ onUpdated(scrollToBottom)
 }
 
 .user-avatar {
-  background-color: #4776E6;
+  background-color: #4776e6;
   color: white;
 }
 
 .ai-avatar {
-  background-color: #8E54E9;
+  background-color: #8e54e9;
   color: white;
 }
 
@@ -154,12 +221,32 @@ onUpdated(scrollToBottom)
 .user-bubble {
   color: white;
   border-top-right-radius: 4px;
+  position: relative;
+  padding-right: 40px;
 }
 
 .ai-bubble {
   background-color: white;
   color: #334155;
   border-top-left-radius: 4px;
+  position: relative;
+  padding-right: 40px;
+}
+
+.copy-button {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.copy-button:hover {
+  color: #409eff;
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .ai-bubble p {
@@ -209,7 +296,10 @@ onUpdated(scrollToBottom)
 }
 
 .message-content {
-  display: inline-block;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+  display: block;
   line-height: 1.6;
   font-size: 15px;
 }
@@ -238,8 +328,10 @@ onUpdated(scrollToBottom)
   color: #e2e8f0;
   border-radius: 8px;
   padding: 16px;
+  padding-right: 36px; /* 为复制按钮留出空间 */
   overflow-x: auto;
   margin: 12px 0;
+  position: relative; /* 确保相对定位以便放置复制按钮 */
 }
 
 :deep(code) {
@@ -261,7 +353,7 @@ onUpdated(scrollToBottom)
   .message {
     max-width: 100%;
   }
-  
+
   .bubble {
     max-width: calc(100% - 40px);
   }
@@ -294,5 +386,37 @@ onUpdated(scrollToBottom)
   text-decoration: underline;
   text-decoration-style: dotted;
   cursor: help;
+}
+
+/* 代码块复制按钮样式 */
+:deep(.code-copy-button) {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  z-index: 10;
+}
+
+:deep(.code-copy-button:hover) {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+:deep(.code-copy-button i) {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
