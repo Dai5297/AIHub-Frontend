@@ -1,7 +1,7 @@
 # AIHub Frontend Project
 # AIHub 前端项目
 
-- AIHUB前端项目 [传送门](https://github.com/Dai5297/AIHub-Backend)
+- AIHUB后端项目 [传送门](https://github.com/Dai5297/AIHub-Backend)
 - 项目在线地址: [传送门](http://47.94.112.239/)  账号: admin  密码: 123456 
 
 ## Project Introduction / 项目简介
