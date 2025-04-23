@@ -1,6 +1,9 @@
 # AIHub Frontend Project
 # AIHub 前端项目
 
+- AIHUB前端项目 [传送门](https://github.com/Dai5297/AIHub-Backend)
+- 项目在线地址: [传送门](http://47.94.112.239/)  账号: admin  密码: 123456 
+
 ## Project Introduction / 项目简介
 AIHub is a Vue 3-based multi-scenario intelligent dialogue platform providing core functionalities including AI assistant, medical consultation, service support, and PDF document Q&A. Built with modular architecture, it supports rapid switching between different conversation scenarios, chat history management, PDF file parsing, and real-time message rendering with typewriter effect.
 
