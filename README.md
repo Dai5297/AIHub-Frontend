@@ -2,6 +2,9 @@
 
 # AIHub 前端项目
 
+- AIHUB后端项目 [传送门](https://github.com/Dai5297/AIHub-Backend)
+- 项目在线地址: [传送门](https://aihub.daiai.top)
+
 ## Project Introduction / 项目简介
 
 AIHub is a Vue 3-based multi-scenario intelligent dialogue platform providing core functionalities including AI assistant, medical consultation, service support, and PDF document Q&A. Built with modular architecture, it supports rapid switching between different conversation scenarios, chat history management, PDF file parsing, and real-time message rendering with typewriter effect.
@@ -60,6 +63,7 @@ AIHub 是一个基于 Vue 3 的多场景智能对话平台，提供人工智能�
 
 ### 环境要求
 
+<<<<<<< HEAD
 - Node.js v18+
 - npm v9+ 或 yarn
 - 现代浏览器（推荐Chrome 120+）
@@ -110,3 +114,6 @@ AIHub-Frontend/
 3. 样式规范：
    - 使用Element Plus布局系统
    - 自定义样式写在assets/main.css
+=======
+### Project Startup
+>>>>>>> 90d0e052658850f824567d3e55834bcc75a28286
