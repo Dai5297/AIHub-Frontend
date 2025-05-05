@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { User, Key, SwitchButton } from '@element-plus/icons-vue'
+import { User, Key, SwitchButton, Monitor } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { RouterLink } from 'vue-router'
 import { getUserDetail, changePassword } from '@/api/layout.js'
@@ -126,6 +126,17 @@ onMounted(getUsrDetail)
           </template>
         </el-dialog>
       </el-main>
+      <el-footer class="footer">
+        <div class="footer-content">
+          <div class="beian-info">
+            <el-icon class="beian-icon"><Monitor /></el-icon>
+            <a href="http://beian.miit.gov.cn/" target="_blank" class="beian-link"
+              >闽ICP备2025097025号-1</a
+            >
+          </div>
+          <div class="copyright">© {{ new Date().getFullYear() }} AIHub. All Rights Reserved.</div>
+        </div>
+      </el-footer>
     </el-container>
   </div>
 </template>
@@ -188,7 +199,7 @@ onMounted(getUsrDetail)
   font-size: 24px;
   font-weight: 600;
   margin-left: 10px;
-  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  background: linear-gradient(90deg, #4776e6 0%, #8e54e9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -220,7 +231,7 @@ onMounted(getUsrDetail)
 }
 
 .nav-link:hover {
-  color: #4776E6;
+  color: #4776e6;
 }
 
 .nav-link:hover::after {
@@ -230,13 +241,13 @@ onMounted(getUsrDetail)
   left: 15px;
   width: calc(100% - 30px);
   height: 3px;
-  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  background: linear-gradient(90deg, #4776e6 0%, #8e54e9 100%);
   border-radius: 3px 3px 0 0;
 }
 
 /* 选中样式 */
 .nav-link.router-link-active {
-  color: #4776E6;
+  color: #4776e6;
   font-weight: 600;
 }
 
@@ -247,26 +258,26 @@ onMounted(getUsrDetail)
   left: 15px;
   width: calc(100% - 30px);
   height: 3px;
-  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+  background: linear-gradient(90deg, #4776e6 0%, #8e54e9 100%);
   border-radius: 3px 3px 0 0;
 }
 
 /* 首页特殊处理 */
-a[href="/main"].nav-link {
+a[href='/main'].nav-link {
   color: #606266;
   font-weight: 500;
 }
 
-a[href="/main"].nav-link.router-link-exact-active {
-  color: #4776E6;
+a[href='/main'].nav-link.router-link-exact-active {
+  color: #4776e6;
   font-weight: 600;
 }
 
-a[href="/main"].nav-link::after {
+a[href='/main'].nav-link::after {
   display: none;
 }
 
-a[href="/main"].router-link-exact-active::after {
+a[href='/main'].router-link-exact-active::after {
   display: block;
 }
 
@@ -289,7 +300,7 @@ a[href="/main"].router-link-exact-active::after {
 
 .avatar-icon {
   font-size: 18px;
-  color: #8E54E9;
+  color: #8e54e9;
   margin-right: 6px;
 }
 
@@ -301,35 +312,70 @@ a[href="/main"].router-link-exact-active::after {
 
 .main {
   background-color: #f5f7fa;
-  height: calc(100vh - 64px); /* 计算主内容区域的高度，减去头部高度 */
+  height: calc(100vh - 64px - 30px); /* 调整主内容区域的高度，减小页脚高度 */
   overflow-y: auto; /* 主内容区域添加垂直滚动条 */
 }
 
-/* 下拉菜单样式 */
-:deep(.el-dropdown-menu__item) {
+/* 页脚样式 */
+.footer {
+  padding: 4px 0;
+  background-color: #f5f7fa;
+  text-align: center;
+  font-size: 11px;
+  color: #909399;
+  border-top: 1px solid #e4e7ed;
+  height: 30px; /* 固定高度为30px */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: row; /* 改为水平排列 */
+  align-items: center;
+  justify-content: center; /* 确保内容居中 */
+  gap: 10px;
+}
+
+.beian-info {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  justify-content: center;
 }
 
-:deep(.el-dropdown-menu__item .el-icon) {
-  margin-right: 8px;
-  font-size: 16px;
+.beian-icon {
+  margin-right: 3px;
+  font-size: 11px;
+  color: #909399;
 }
 
-/* 路由切换动画 */
-.fade-transform-enter-active,
-.fade-transform-leave-active {
-  transition: all 0.5s;
+.beian-link {
+  color: #909399;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 1px 2px;
+  border-radius: 3px;
+  font-size: 11px;
 }
 
-.fade-transform-enter-from {
-  opacity: 0;
-  transform: translateX(-30px);
+.beian-link:hover {
+  color: #409eff;
+  background-color: rgba(64, 158, 255, 0.1);
 }
 
-.fade-transform-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
+.copyright {
+  font-size: 10px;
+  color: #a0a0a0;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    padding: 0 15px;
+  }
 }
 </style>
